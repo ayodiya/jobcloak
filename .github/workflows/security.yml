@@ -1,0 +1,61 @@
+name: Security
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: "0 3 * * 1" # weekly, Monday 03:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit
+        run: npm audit --audit-level=high
+
+  secrets:
+    name: Secrets scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  outbound:
+    name: External AI calls
+    runs-on: ubuntu-latest
+    # This fails PRs that accidentally perform external network LLM calls or
+    # that attempt to reach live job sites in tests. It scans the repository
+    # surface for calls that should not exist in CI.
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block live-external calls in tests
+        run: |
+          if rg -n --glob '!node_modules' 'https?://(api|generativelanguage|api\.openai|platform\.openai|claude|aarnjanets)' packages apps tests 2>/dev/null; then
+            echo "::error::Found references to external AI APIs in packages/apps/tests. These are not allowed; use MockLLMProvider."
+            exit 1
+          fi
