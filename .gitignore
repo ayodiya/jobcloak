@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+out/
+turbo/
+.tsbuildinfo
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+*.lcov
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+!.env.test.example
+*.pem
+*.key
+
+# Runtime data — never commit private candidate data or browser state
+browser-profiles/
+data/
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# Ollama / model artifacts
+models/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+
+# Generated CV / document artifacts
+generated/
+documents/output/
+apps/web/public/generated/
+
+# Prisma
+prisma/migrations/*/migration_lock.toml!.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+Thumbs.db
