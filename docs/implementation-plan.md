@@ -35,10 +35,11 @@ diff review → commit all pass.
 ### Phase 0 — Repository Foundation ✅ (committed to `develop`)
 `chore(repo)` scaffold → `docs(repo)` full doc set + ADRs → `ci(repo)` workflows/templates.
 
-### Phase 1 — Application Foundation
+### Phase 1 — Application Foundation ✅ (committed to `develop`)
 Monorepo + TS strict + config + logging + errors + Postgres/Redis (compose) + Prisma
 schema/migrations/seed + API shell (Fastify, /health) + worker shell (BullMQ, queues) +
 dashboard shell (Next.js, health page).
+Verified: `typecheck`, `lint`, `test:unit` (36), `test:integration` (3), `build` — all green.
 
 ### Phase 2 — Candidate Intelligence
 Candidate profile + experience + skills + projects + education + certifications +
