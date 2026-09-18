@@ -41,9 +41,10 @@ schema/migrations/seed + API shell (Fastify, /health) + worker shell (BullMQ, qu
 dashboard shell (Next.js, health page).
 Verified: `typecheck`, `lint`, `test:unit` (36), `test:integration` (3), `build` — all green.
 
-### Phase 2 — Candidate Intelligence
+### Phase 2 — Candidate Intelligence ✅ (committed to `develop`)
 Candidate profile + experience + skills + projects + education + certifications +
 achievements + evidence; repositories, services, validation; CV import (text); seed data.
+Verified: `typecheck`, `lint`, `test:unit` (55), `test:integration` (6), `build` — all green.
 
 ### Phase 3 — AI
 `LLMProvider`, `OllamaProvider`, `MockLLMProvider`, `ModelRouter`, `PromptManager`,
