@@ -27,3 +27,227 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2 — Candidate Intelligence
+// ---------------------------------------------------------------------------
+
+enum SourceType {
+  ManualEntry
+  CVImport
+  UserProvided
+}
+
+enum SkillLevel {
+  Beginner
+  Intermediate
+  Advanced
+  Expert
+}
+
+enum CvImportStatus {
+  PendingReview
+  Imported
+  Failed
+}
+
+/// Single factual source for the candidate in this local-first tool.
+/// Identity/contact fields are optional — the tool never coerces them.
+model CandidateProfile {
+  id                 String   @id @default(uuid())
+  firstName          String?
+  lastName           String?
+  title              String?
+  emails             Json?
+  phones             Json?
+  address            String?
+  city               String?
+  country            String?
+  nationality        String?
+  languages          Json?
+  workAuthorization  String?
+  visaStatus         String?
+  remotePreferred    Boolean?
+  relocationWilling  Boolean?
+  preferredLocations Json?
+  targetRoles        Json?
+  expectedSalaryMin  Int?
+  expectedSalaryMax  Int?
+  currency           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  evidence       EvidenceRecord[]
+  skills         Skill[]
+  experience     ExperienceEntry[]
+  projects       ProjectEntry[]
+  education      EducationEntry[]
+  certifications CertificationEntry[]
+  achievements   AchievementEntry[]
+  cvImports      CvImport[]
+
+  @@index([updatedAt])
+}
+
+/// Evidence base: the factual source of truth behind candidate claims.
+/// See docs/adr/0005-evidence-based-candidate-generation.md.
+model EvidenceRecord {
+  id        String           @id @default(uuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  source    SourceType       @default(UserProvided)
+  summary   String?
+  rawText   String
+  claims    Json? // array of extracted claim statements
+  createdAt DateTime         @default(now())
+
+  experience     ExperienceEntry[]
+  projects       ProjectEntry[]
+  education      EducationEntry[]
+  certifications CertificationEntry[]
+  achievements   AchievementEntry[]
+
+  @@index([profileId])
+  @@index([source])
+}
+
+/// A named skill. `key` is the normalized (trimmed, lower-cased) name used for
+/// deduplication; `name` keeps the human-readable spelling.
+model Skill {
+  id           String           @id @default(uuid())
+  profileId    String
+  profile      CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name         String
+  key          String
+  category     String?
+  level        SkillLevel       @default(Intermediate)
+  years        Int?
+  lastUsedYear Int?
+  frequency    String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([profileId, key])
+  @@index([profileId])
+}
+
+model ExperienceEntry {
+  id               String           @id @default(uuid())
+  profileId        String
+  profile          CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  organization     String
+  title            String
+  startDate        DateTime
+  endDate          DateTime?
+  current          Boolean          @default(false)
+  location         String?
+  remote           Boolean?
+  summary          String?
+  technologies     Json?
+  responsibilities Json? // assertions (evidence-backed)
+  achievements     Json? // evidence-backed claims
+  evidenceId       String?
+  evidence         EvidenceRecord?  @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  sortOrder        Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([profileId])
+}
+
+model ProjectEntry {
+  id           String           @id @default(uuid())
+  profileId    String
+  profile      CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name         String
+  role         String?
+  description  String?
+  technologies Json?
+  achievements Json? // evidence-backed claims
+  url          String?
+  startDate    DateTime?
+  endDate      DateTime?
+  current      Boolean          @default(false)
+  evidenceId   String?
+  evidence     EvidenceRecord?  @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  sortOrder    Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([profileId])
+}
+
+model EducationEntry {
+  id          String           @id @default(uuid())
+  profileId   String
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  institution String
+  degree      String?
+  field       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  gpa         String?
+  notes       String?
+  evidenceId  String?
+  evidence    EvidenceRecord?  @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([profileId])
+}
+
+model CertificationEntry {
+  id                 String           @id @default(uuid())
+  profileId          String
+  profile            CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name               String
+  issuer             String?
+  issueDate          DateTime?
+  expiryDate         DateTime?
+  credentialUrl      String?
+  verificationStatus String?
+  evidenceId         String?
+  evidence           EvidenceRecord?  @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  sortOrder          Int              @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([profileId])
+}
+
+model AchievementEntry {
+  id          String           @id @default(uuid())
+  profileId   String
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title       String
+  category    String?
+  date        DateTime?
+  url         String?
+  description String?
+  evidenceId  String?
+  evidence    EvidenceRecord?  @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([profileId])
+}
+
+/// A text CV import. The original text is stored as the versioned source;
+/// parsing is deterministic in Phase 2 (AI-assisted extraction lands in a
+/// later phase). Privacy: rawText is candidate data, never audit metadata.
+model CvImport {
+  id           String           @id @default(uuid())
+  profileId    String
+  profile      CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  rawText      String
+  sourceNote   String?
+  status       CvImportStatus   @default(PendingReview)
+  parseSummary Json? // deterministic parse result (sections, skill keywords)
+  error        String?
+  createdAt    DateTime         @default(now())
+
+  @@index([profileId])
+  @@index([createdAt])
+}

@@ -2,13 +2,15 @@ import { spawnSync } from 'node:child_process';
 
 /**
  * Integration test bootstrap:
- * 1. Load environment from `.env` / `.env.test` / `.env.test.example` if present.
+ * 1. Load environment from `.env.test` / `.env.test.example` / `.env` if present
+ *    (first file to define a key wins — Node's loadEnvFile never overrides, and
+ *    pre-existing process.env from CI always takes precedence).
  * 2. Apply migrations via Prisma migrate deploy against DATABASE_URL.
  *
- * CI provides DATABASE_URL via workflow env and runs `db:migrate` in the job;
- * this bootstrap makes local runs deterministic too.
+ * Integration tests must never touch the development database, so the test
+ * environment files are loaded before `.env`.
  */
-for (const file of ['.env', '.env.test', '.env.test.example']) {
+for (const file of ['.env.test', '.env.test.example', '.env']) {
   try {
     process.loadEnvFile(file);
   } catch {
