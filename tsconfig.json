@@ -22,6 +22,7 @@
     "types": ["node"],
     "verbatimModuleSyntax": true,
     "baseUrl": ".",
+    "noEmit": true,
     "paths": {
       "@jobs-app/config": ["packages/config/src/index.ts"],
       "@jobs-app/shared": ["packages/shared/src/index.ts"],

@@ -8,6 +8,7 @@ build/
 out/
 turbo/
 .tsbuildinfo
+*.tsbuildinfo
 
 # Testing
 coverage/
