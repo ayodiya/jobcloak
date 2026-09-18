@@ -110,8 +110,8 @@ All tests in CI run against containerized databases; Ollama is mocked everywhere
 |---|---|---|
 | Dashboard | 3000 | Next.js dev server |
 | API | 3100 | Fastify dev server |
-| PostgreSQL | 5432 | via `docker compose` |
-| Redis | 6379 | via `docker compose` |
+| PostgreSQL | 15432 | via `docker compose` (host port) |
+| Redis | 6380 | via `docker compose` (host port) |
 | Ollama | 11434 | local Ollama server |
 
 ## Troubleshooting

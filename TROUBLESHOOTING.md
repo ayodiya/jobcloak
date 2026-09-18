@@ -27,7 +27,7 @@ docker compose ps
 Check the connection directly:
 
 ```bash
-PGPASSWORD=app psql -h localhost -U app -d jobs_applications -c "select 1;"
+PGPASSWORD=app psql -h localhost -p 15432 -U app -d jobs_applications -c "select 1;"
 ```
 
 If the `psql` client is not installed locally, use the docker version:
