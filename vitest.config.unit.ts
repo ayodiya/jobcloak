@@ -19,6 +19,7 @@ export default defineConfig({
       '@jobs-app/shared': fileURLToPath(new URL('./packages/shared/src/index.ts', import.meta.url)),
       '@jobs-app/database': fileURLToPath(new URL('./packages/database/src/index.ts', import.meta.url)),
       '@jobs-app/ai': fileURLToPath(new URL('./packages/ai/src/index.ts', import.meta.url)),
+      '@jobs-app/ai/testing': fileURLToPath(new URL('./packages/ai/src/testing/index.ts', import.meta.url)),
       '@jobs-app/jobs': fileURLToPath(new URL('./packages/jobs/src/index.ts', import.meta.url)),
       '@jobs-app/matching': fileURLToPath(new URL('./packages/matching/src/index.ts', import.meta.url)),
       '@jobs-app/candidate': fileURLToPath(new URL('./packages/candidate/src/index.ts', import.meta.url)),
