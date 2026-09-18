@@ -28,6 +28,7 @@
       "@jobs-app/shared": ["packages/shared/src/index.ts"],
       "@jobs-app/database": ["packages/database/src/index.ts"],
       "@jobs-app/ai": ["packages/ai/src/index.ts"],
+      "@jobs-app/ai/testing": ["packages/ai/src/testing/index.ts"],
       "@jobs-app/jobs": ["packages/jobs/src/index.ts"],
       "@jobs-app/matching": ["packages/matching/src/index.ts"],
       "@jobs-app/candidate": ["packages/candidate/src/index.ts"],
