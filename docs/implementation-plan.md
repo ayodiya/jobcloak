@@ -46,10 +46,11 @@ Candidate profile + experience + skills + projects + education + certifications 
 achievements + evidence; repositories, services, validation; CV import (text); seed data.
 Verified: `typecheck`, `lint`, `test:unit` (55), `test:integration` (6), `build` — all green.
 
-### Phase 3 — AI
+### Phase 3 — AI ✅ (committed to `develop`)
 `LLMProvider`, `OllamaProvider`, `MockLLMProvider`, `ModelRouter`, `PromptManager`,
 `StructuredOutputParser`, `AIValidator`; evidence retrieval; tests incl. malformed JSON,
 timeouts, unavailable Ollama.
+Verified: `typecheck`, `lint`, `test:unit` (131), `test:integration` (6), `build` — all green.
 
 ### Phase 4 — Jobs
 JobSource interface + registry, normalization, deduplication (fingerprint unique index),

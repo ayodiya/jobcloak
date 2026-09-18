@@ -21,7 +21,7 @@ Contract rules:
 
 - `complete`/`chat` return the model's text verbatim (never re-validate; validation is
   the caller's job).
-- `structured` **must** return a Zod-validated `T` or throw `AAAILValidationError`.
+- `structured` **must** return a Zod-validated `T` or throw `AIValidationError`.
   Implement by asking the model for JSON (Ollama: JSON-mode / tool calls) and `parse`.
 - Providers never perform business logic, prompt formatting, or scoring. Formatting
   lives in `PromptManager`; parsing/validation lives in `StructuredOutputParser`.
@@ -76,7 +76,7 @@ Tests use `MockLLMProvider` from `packages/ai/src/testing`. Contract tests live 
 - `complete` returns text
 - `chat` maps messages + options to the client's shape
 - `structured` parses into the schema and throws a validation error on malformed JSON
-- network errors map to `AAAIProviderError`
+- network errors map to `AIProviderError`
 
 CI runs against the mock; Ollama integration is tested locally with a recorded replay
 (see [testing-with-the-llm.md](./testing-with-the-llm.md)).

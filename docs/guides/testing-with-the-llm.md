@@ -23,16 +23,32 @@ no global/actual LLM in tests.
 ## Record and replay locally
 
 1. Run Ollama: `ollama serve`.
-2. Record a session:
-   ```bash
-   npm run ai:record -- --model qwen2.5-coder:3b --scenario extract-requirements
-   ```
-   This writes a fixture under `packages/ai/src/testing/fixtures/`.
-3. Add a test that replays the fixture through `RecordingLLMProvider`.
+2. Record a real session by wrapping the provider:
 
-Signature-style recordings keep tests hermetic while still locking in the real
-model's behavior for the scenarios that matter (requirement extraction, claim
-classification).
+   ```ts
+   import { OllamaProvider } from '@jobs-app/ai';
+   import { RecordingLLMProvider } from '@jobs-app/ai/testing';
+
+   const recorder = RecordingLLMProvider.recording(
+     new OllamaProvider({ baseUrl: 'http://localhost:11434', model: 'qwen2.5-coder:3b' }),
+   );
+   await recorder.structured({ prompt, schema });
+   await recorder.save('packages/ai/src/testing/fixtures/extract-requirements.json');
+   ```
+
+3. Replay the fixture in a test:
+
+   ```ts
+   import { RecordingLLMProvider, loadRecording } from '@jobs-app/ai/testing';
+
+   const recording = await loadRecording('packages/ai/src/testing/fixtures/extract-requirements.json');
+   const llm = RecordingLLMProvider.replaying(recording);
+   ```
+
+Replayed `structured` output is validated against the caller's schema again, and
+recorded failures replay as the same error type. Recordings keep tests hermetic
+while locking in the real model's behavior for the scenarios that matter
+(requirement extraction, claim classification).
 
 ## Verifying structured JSON reliability
 
@@ -42,7 +58,7 @@ handles:
 1. Attempt strict JSON parse of the full response.
 2. Extract a JSON object fragment (brace/array balancing).
 3. Zod `safeParse`; on failure, retry once with a corrective prompt; on second
-   failure, `throw AAAIValidationError` (never return `undefined`/`null` silently).
+   failure, `throw AIValidationError` (never return `undefined`/`null` silently).
 
 ## What is NOT testable in CI
 
