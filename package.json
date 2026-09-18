@@ -1,0 +1,58 @@
+{
+  "name": "jobs-applications",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Privacy-first, local-first AI job discovery, matching and application assistant powered by Ollama.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "npm@11.19.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,api -c cyan,green \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm run dev -w @jobs-app/web",
+    "dev:api": "npm run dev -w @jobs-app/api",
+    "dev:worker": "npm run dev -w @jobs-app/worker",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "format:check": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "vitest run --config vitest.config.unit.ts",
+    "test:integration": "vitest run --config vitest.config.integration.ts",
+    "test:browser": "npm run test:browser -w @jobs-app/browser",
+    "test:web": "npm run test -w @jobs-app/web",
+    "db:generate": "npm run generate -w @jobs-app/database",
+    "db:migrate": "npm run migrate -w @jobs-app/database",
+    "db:seed": "npm run seed -w @jobs-app/database",
+    "db:reset": "npm run reset -w @jobs-app/database",
+    "db:studio": "npm run studio -w @jobs-app/database"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.32",
+    "concurrently": "^9.2.0",
+    "eslint": "^9.29.0",
+    "eslint-config-prettier": "^10.1.5",
+    "@eslint/js": "^9.29.0",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0",
+    "vitest": "^3.2.4"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "@prisma/client@6.19.3": true,
+    "prisma@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "msgpackr-extract@3.0.4": true,
+    "fsevents@2.3.3": true
+  }
+}

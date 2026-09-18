@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.next
+out
+playwright-report
+test-results
+*.tsbuildinfo
+*.log
+package-lock.json.tmp
+CHANGELOG.md.first-added
