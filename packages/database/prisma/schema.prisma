@@ -1,0 +1,29 @@
+// PostgreSQL data model for jobs-applications.
+// Phases add models incrementally; each change ships its own migration.
+// See docs/adr/0001-use-postgresql.md and docs/adr/0007-prisma-for-orm.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Cross-cutting audit trail. Every meaningful state change appends a row.
+/// Privacy: never store credentials, cookies, session material, or CV contents.
+model AuditLog {
+  id            String   @id @default(uuid())
+  actorId       String?
+  action        String
+  entityType    String
+  entityId      String?
+  metadata      Json?
+  ipAddress     String?
+  correlationId String?
+  createdAt     DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

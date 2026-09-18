@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "verbatimModuleSyntax": true,
+    "baseUrl": ".",
+    "paths": {
+      "@jobs-app/config": ["packages/config/src/index.ts"],
+      "@jobs-app/shared": ["packages/shared/src/index.ts"],
+      "@jobs-app/database": ["packages/database/src/index.ts"],
+      "@jobs-app/ai": ["packages/ai/src/index.ts"],
+      "@jobs-app/jobs": ["packages/jobs/src/index.ts"],
+      "@jobs-app/matching": ["packages/matching/src/index.ts"],
+      "@jobs-app/candidate": ["packages/candidate/src/index.ts"],
+      "@jobs-app/documents": ["packages/documents/src/index.ts"],
+      "@jobs-app/browser": ["packages/browser/src/index.ts"],
+      "@jobs-app/applications": ["packages/applications/src/index.ts"],
+      "@jobs-app/notifications": ["packages/notifications/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/**/*",
+    "apps/api/**/*",
+    "apps/worker/**/*"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/.next/**",
+    "**/.turbo/**",
+    "**/test-results/**",
+    "**/*.d.ts",
+    "apps/web/**"
+  ]
+}

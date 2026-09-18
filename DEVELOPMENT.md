@@ -43,8 +43,8 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ```env
 NODE_ENV=development
-DATABASE_URL=postgresql://app:app@localhost:5432/jobs_applications?schema=public
-REDIS_URL=redis://localhost:6379
+DATABASE_URL=postgresql://app:app@localhost:15432/jobs_applications?schema=public
+REDIS_URL=redis://localhost:6380
 
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen2.5-coder:3b
