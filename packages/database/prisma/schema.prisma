@@ -251,3 +251,110 @@ model CvImport {
   @@index([profileId])
   @@index([createdAt])
 }
+
+// ---------------------------------------------------------------------------
+// Phase 4 — Job Discovery
+// ---------------------------------------------------------------------------
+
+enum JobSourceKind {
+  Api
+  Fixture
+  Manual
+}
+
+enum JobStatus {
+  Active
+  Closed
+  Unknown
+}
+
+enum RequirementKind {
+  Required
+  Preferred
+  NiceToHave
+}
+
+enum RequirementCategory {
+  Skill
+  Experience
+  Education
+  Certification
+  Language
+  Other
+}
+
+/// How a requirement was derived. AI output is always merged under the
+/// deterministic parser, never over it (see discovery-and-matching.md).
+enum RequirementSource {
+  Deterministic
+  AI
+}
+
+/// A normalized job listing. Raw source fields are preserved for debugging.
+/// Privacy: only public listing data; never credentials or application state.
+model Job {
+  id             String        @id @default(uuid())
+  sourceName     String
+  sourceKind     JobSourceKind @default(Api)
+  fingerprint    String // sha1(host + normalizedUrl)
+  url            String
+  normalizedUrl  String
+  title          String
+  company        String
+  location       String?
+  remote         Boolean       @default(false)
+  description    String
+  employmentType String?
+  seniority      String?
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String?
+  postedAt       DateTime?
+  status         JobStatus     @default(Active)
+  raw            Json?
+  discoveredAt   DateTime      @default(now())
+  lastSeenAt     DateTime      @default(now())
+
+  requirements JobRequirement[]
+
+  @@unique([sourceName, fingerprint])
+  @@index([fingerprint])
+  @@index([company])
+  @@index([status])
+  @@index([discoveredAt])
+  @@index([postedAt])
+}
+
+/// A single extracted requirement for a job.
+model JobRequirement {
+  id         String              @id @default(uuid())
+  jobId      String
+  job        Job                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  kind       RequirementKind
+  category   RequirementCategory @default(Skill)
+  key        String // normalized lookup key
+  name       String // display label
+  level      SkillLevel?
+  minYears   Int?
+  detail     String?
+  source     RequirementSource   @default(Deterministic)
+  confidence Float?
+  createdAt  DateTime            @default(now())
+
+  @@unique([jobId, kind, category, key])
+  @@index([jobId])
+  @@index([key])
+}
+
+/// Reachability/health of a job source, updated by discovery runs.
+model SourceHealth {
+  id                  String    @id @default(uuid())
+  sourceName          String    @unique
+  healthy             Boolean   @default(true)
+  consecutiveFailures Int       @default(0)
+  lastError           String?
+  lastCheckedAt       DateTime?
+  lastSuccessAt       DateTime?
+  updatedAt           DateTime  @updatedAt
+}
+
