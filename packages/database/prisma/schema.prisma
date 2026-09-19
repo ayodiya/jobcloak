@@ -316,6 +316,7 @@ model Job {
   lastSeenAt     DateTime      @default(now())
 
   requirements JobRequirement[]
+  match        JobMatch?
 
   @@unique([sourceName, fingerprint])
   @@index([fingerprint])
@@ -356,5 +357,51 @@ model SourceHealth {
   lastCheckedAt       DateTime?
   lastSuccessAt       DateTime?
   updatedAt           DateTime  @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5 — Matching
+// ---------------------------------------------------------------------------
+
+/// One idempotent match result per job. Scoring is deterministic and
+/// explanatory (see discovery-and-matching.md); it is a suitability indicator
+/// for the single local candidate, never a prediction of hiring success.
+model JobMatch {
+  id            String   @id @default(uuid())
+  jobId         String   @unique
+  job           Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobTitle      String
+  company       String
+  totalScore    Float
+  eligible      Boolean  @default(true)
+  confidence    Float
+  disqualifiers Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  dimensions JobMatchDimension[]
+
+  @@index([eligible])
+  @@index([totalScore])
+  @@index([company])
+}
+
+/// A scored dimension contributing to a JobMatch (tech, experience,
+/// seniority, role, location, domain, salary).
+model JobMatchDimension {
+  id         String   @id @default(uuid())
+  matchId    String
+  match      JobMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  key        String
+  weight     Int
+  score      Float
+  applicable Boolean
+  status     String
+  detail     String?
+  evidence   Json?
+  createdAt  DateTime @default(now())
+
+  @@unique([matchId, key])
+  @@index([matchId])
 }
 
