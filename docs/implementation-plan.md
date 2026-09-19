@@ -69,7 +69,13 @@ Verified: `typecheck`, `lint`, `test:unit` (215), `test:integration` (14), `buil
 ### Phase 6 — Application Generation
 Material model + versioning, tailored CV + cover letter + answers generation,
 factuality validation pipeline (claim extraction → evidence comparison → unsupported claim
-detection → regenerate/review), PDF/DOCX/TXT output, snapshot pinned per submission.
+detection → regenerate/review), TXT/DOCX output (PDF deferred), snapshot pinned per submission.
+`@jobs-app/documents`: `ApplicationGenerator`, `MaterialRepository` (immutable
+`MaterialVersion` per generation, `EvidenceSnapshot` pinned via
+`profileId_kind_jobId_key` identity), deterministic render (model writes prose only),
+TXT + DOCX export, prompt templates `documents.cv`/`documents.cover-letter`/`documents.answer`;
+schema `EvidenceSnapshot`/`ApplicationMaterial`/`MaterialVersion`.
+Verified: `typecheck`, `lint`, `test:unit` (238), `test:integration` (18), `build` — all green.
 
 ### Phase 7 — Browser Automation
 Playwright session (open/map/fill/answer/upload/submit/verify/pause/resume/cancel),
