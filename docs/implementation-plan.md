@@ -59,8 +59,12 @@ edge-case tests.
 Verified: `typecheck`, `lint`, `test:unit` (173), `test:integration` (11), `build` — all green.
 
 ### Phase 5 — Matching
-Deterministic weighted scoring, hard filters/disqualifiers, explainable results,
+Deterministic weighted scoring (tech 30 / experience 20 / seniority 15 / role 15 /
+location 10 / domain 5 / salary 5), hard filters/disqualifiers, explainable results,
 confidence, persistence; AI-assisted interpretation only where deterministic data is thin.
+`@jobs-app/matching`: `scoreJob`, `lexicon`, `experience`, `weights`, `MatchRepository`,
+`MatchingService` (idempotent per `jobId`); schema `JobMatch`/`JobMatchDimension`.
+Verified: `typecheck`, `lint`, `test:unit` (215), `test:integration` (14), `build` — all green.
 
 ### Phase 6 — Application Generation
 Material model + versioning, tailored CV + cover letter + answers generation,
