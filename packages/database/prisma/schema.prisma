@@ -85,6 +85,8 @@ model CandidateProfile {
   certifications CertificationEntry[]
   achievements   AchievementEntry[]
   cvImports      CvImport[]
+  snapshots      EvidenceSnapshot[]
+  materials      ApplicationMaterial[]
 
   @@index([updatedAt])
 }
@@ -403,5 +405,86 @@ model JobMatchDimension {
 
   @@unique([matchId, key])
   @@index([matchId])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6 — Application Generation
+// ---------------------------------------------------------------------------
+
+enum ApplicationMaterialKind {
+  Cv
+  CoverLetter
+  Answer
+}
+
+enum ApplicationMaterialStatus {
+  Draft
+  Ready
+  Review
+}
+
+/// A reproducible snapshot of the evidence base at generation time.
+/// Stores only evidence ids plus a content digest (ADR-0005): a later
+/// submission can verify the exact evidence its materials were grounded on
+/// without duplicating evidence text.
+model EvidenceSnapshot {
+  id          String   @id @default(uuid())
+  profileId   String
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  hash        String // sha1 over sorted "<id>:<rawText>" lines
+  evidenceIds Json // array of EvidenceRecord ids included
+  createdAt   DateTime @default(now())
+
+  versions MaterialVersion[]
+
+  @@index([profileId])
+  @@index([hash])
+}
+
+/// A single generated application material: tailored CV, cover letter, or an
+/// answer to one application question. `jobId` "" means general-purpose.
+/// `key` disambiguates answers (normalized question text); "" otherwise.
+/// Identity is (profileId, kind, jobId, key); regenerating bumps `version`.
+model ApplicationMaterial {
+  id        String                  @id @default(uuid())
+  profileId String
+  profile   CandidateProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  kind      ApplicationMaterialKind
+  jobId     String                  @default("")
+  key       String                  @default("")
+  version   Int                     @default(1)
+  status    ApplicationMaterialStatus @default(Draft)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  versions MaterialVersion[]
+
+  @@unique([profileId, kind, jobId, key])
+  @@index([profileId, kind])
+  @@index([jobId])
+}
+
+/// One immutable version of a material, pinned to the prompt version and
+/// evidence snapshot that produced it (ADR-0005 reproducibility). `content`
+/// is the final rendered text; `draft` is the structured generator output;
+/// `factuality` is the AIValidator FactualityReport when one ran.
+model MaterialVersion {
+  id            String        @id @default(uuid())
+  materialId    String
+  material      ApplicationMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  version       Int
+  content       String
+  draft         Json?
+  promptId      String
+  promptVersion Int
+  aiModel       String?
+  snapshotId    String?
+  snapshot      EvidenceSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  factuality    Json?
+  createdAt     DateTime      @default(now())
+
+  @@unique([materialId, version])
+  @@index([materialId])
+  @@index([snapshotId])
 }
 
