@@ -38,11 +38,7 @@
       "@jobs-app/notifications": ["packages/notifications/src/index.ts"]
     }
   },
-  "include": [
-    "packages/**/*",
-    "apps/api/**/*",
-    "apps/worker/**/*"
-  ],
+  "include": ["packages/**/*", "apps/api/**/*", "apps/worker/**/*"],
   "exclude": [
     "**/node_modules/**",
     "**/dist/**",
@@ -51,6 +47,7 @@
     "**/.turbo/**",
     "**/test-results/**",
     "**/*.d.ts",
-    "apps/web/**"
+    "apps/web/**",
+    "packages/browser/**"
   ]
 }

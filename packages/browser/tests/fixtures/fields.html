@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Field types</title>
+  </head>
+  <body>
+    <main>
+      <h1>Field types</h1>
+      <form action="/submit" method="post">
+        <fieldset>
+          <legend>Preferred contact channel</legend>
+          <p>
+            <label><input type="radio" name="channel" value="Email" required /> Email</label>
+          </p>
+          <p>
+            <label><input type="radio" name="channel" value="Phone" /> Phone</label>
+          </p>
+        </fieldset>
+        <p>
+          <label for="country">Country</label>
+          <select id="country" name="country">
+            <option value="">Select a country</option>
+            <option value="DE">Germany</option>
+            <option value="US">United States</option>
+            <option value="UK">United Kingdom</option>
+          </select>
+        </p>
+        <p>
+          <label for="resume">CV file</label>
+          <input id="resume" name="resume" type="file" accept=".pdf" />
+        </p>
+        <button type="submit">Continue</button>
+      </form>
+    </main>
+  </body>
+</html>

@@ -78,9 +78,15 @@ schema `EvidenceSnapshot`/`ApplicationMaterial`/`MaterialVersion`.
 Verified: `typecheck`, `lint`, `test:unit` (238), `test:integration` (18), `build` — all green.
 
 ### Phase 7 — Browser Automation
-Playwright session (open/map/fill/answer/upload/submit/verify/pause/resume/cancel),
-FormDetector, FieldMapper, QuestionClassifier, CAPTCHA/MFA/legal/work-auth detection,
-SubmissionVerifier, audit events, fixture pages, browser tests.
+Playwright session primitives `@jobs-app/browser`: `BrowserSession`
+(open/map/classify/mapValues/fill/fillQuestions/upload/gates/submit/verify/pause/resume/
+cancel/close + audit events), `harvestForm`/`buildFields`/`inferType`/`selectorFor`,
+scoring-based `mapFields` (never fabricates; unresolved `required` fields stop),
+deterministic + AI-backfill `classifyQuestion` (captcha/mfa/identity/challenge/legal/
+work-authorization are `stop` gates), `verifySubmission`
+(`verified`/`failed`/`pending`/`inconclusive`), fixture pages + Playwright browser tests.
+Verified: `typecheck`, `lint`, `test:unit` (280), `test:integration` (18), `build`,
+`test:browser` (4) — all green.
 
 ### Phase 8 — Dashboard
 Next.js + MUI + TanStack Query: /dashboard, /jobs, /jobs/:id, /matches, /applications,
