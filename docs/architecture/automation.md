@@ -53,7 +53,8 @@ flowchart LR
 
 ## Testing
 
-- Browser tests run against local fixture HTML pages (`tests/fixtures/browser/`).
+- Browser tests run against local fixture HTML pages (`packages/browser/tests/fixtures/`).
 - Tests verify: form detection, field mapping, CAPTCHA detection stop, MFA stop,
-  pause/resume, upload, submission verification against fixtures.
+  radio/select mapper, file upload, unresolved-required stop, submission verification
+  against fixtures.
 - **Tests never contact real job sites and never submit real applications.**
