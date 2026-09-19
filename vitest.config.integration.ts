@@ -10,6 +10,7 @@ export default defineConfig({
     ],
     environment: 'node',
     pool: 'threads',
+    fileParallelism: false,
     testTimeout: 30000,
     hookTimeout: 60000,
     setupFiles: ['./vitest.setup.integration.ts'],

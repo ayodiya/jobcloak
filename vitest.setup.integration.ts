@@ -22,6 +22,17 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is required for integration tests');
 }
 
+// Integration suites truncate candidate/job/match tables in their setup. Guard
+// hard against ever running that against a non-test database: the URL's
+// database name must signal a test DB, otherwise we refuse to start.
+const databaseName = new URL(process.env.DATABASE_URL).pathname.replace(/^\//, '');
+if (!/test/i.test(databaseName)) {
+  throw new Error(
+    `Refusing to run integration tests: DATABASE_URL points at "${databaseName}", ` +
+      'not a test database. Point it at a DB whose name contains "test".',
+  );
+}
+
 const migrate = spawnSync(
   'npx',
   ['prisma', 'migrate', 'deploy', '--schema', 'packages/database/prisma/schema.prisma'],
