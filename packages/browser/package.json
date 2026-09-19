@@ -1,0 +1,28 @@
+{
+  "name": "@jobs-app/browser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright-backed browser session primitives for safe, human-gated job applications.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test:browser": "playwright test --config playwright.config.ts"
+  },
+  "dependencies": {
+    "@jobs-app/ai": "0.1.0",
+    "@jobs-app/shared": "0.1.0",
+    "playwright": "^1.63.0",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  },
+  "allowScripts": {
+    "playwright@1.63.0": true,
+    "playwright-core@1.63.0": true,
+    "playwright-core@^1.63.0": true
+  }
+}
