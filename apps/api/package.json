@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
+    "@jobs-app/applications": "*",
     "@jobs-app/config": "*",
     "@jobs-app/database": "*",
     "@jobs-app/shared": "*",

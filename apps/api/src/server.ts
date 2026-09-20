@@ -6,6 +6,16 @@ import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
 import Redis from 'ioredis';
 import { makeErrorHandler } from './error-handler.js';
 import { registerHealthRoutes, type SystemProbes } from './routes/health.js';
+import { registerDashboardRoutes } from './routes/dashboard.js';
+import { registerJobsRoutes } from './routes/jobs.js';
+import { registerMatchesRoutes } from './routes/matches.js';
+import { registerCandidateRoutes } from './routes/candidate.js';
+import { registerApplicationsRoutes } from './routes/applications.js';
+import { registerSourcesRoutes } from './routes/sources.js';
+import { registerAutomationRoutes } from './routes/automation.js';
+import { registerSettingsRoutes } from './routes/settings.js';
+import { registerAuditRoutes } from './routes/audit.js';
+import type { RouteContext } from './routes/context.js';
 
 export interface AppDeps {
   config: Env;
@@ -15,6 +25,11 @@ export interface AppDeps {
    * tests inject deterministic stubs.
    */
   probes?: Partial<SystemProbes>;
+  /**
+   * Injectable Prisma client for the dashboard routes. Defaults to the shared
+   * @jobs-app/database singleton, resolved lazily on first use.
+   */
+  db?: PrismaClient;
 }
 
 export function buildApp(deps: AppDeps): FastifyInstance {
@@ -58,7 +73,30 @@ export function buildApp(deps: AppDeps): FastifyInstance {
 
   void registerHealthRoutes(app, probes);
 
+  const context: RouteContext = {
+    config,
+    db: deps.db ? async () => deps.db as PrismaClient : lazilyResolvedDb(),
+  };
+  void registerDashboardRoutes(app, context);
+  void registerJobsRoutes(app, context);
+  void registerMatchesRoutes(app, context);
+  void registerCandidateRoutes(app, context);
+  void registerApplicationsRoutes(app, context);
+  void registerSourcesRoutes(app, context);
+  void registerAutomationRoutes(app, context);
+  void registerSettingsRoutes(app, context);
+  void registerAuditRoutes(app, context);
+
   return app;
+}
+
+/** Resolve the shared database singleton on first request, then cache it. */
+function lazilyResolvedDb(): () => Promise<PrismaClient> {
+  let client: PrismaClient | undefined;
+  return async () => {
+    client ??= (await import('@jobs-app/database')).prisma;
+    return client;
+  };
 }
 
 function defaultDatabaseProbe(): () => Promise<boolean> {
