@@ -14,7 +14,7 @@
   "dependencies": {
     "@jobs-app/database": "*",
     "@jobs-app/shared": "*",
-    "zod": "^3.24.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "tsx": "^4.20.3"

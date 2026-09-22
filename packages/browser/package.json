@@ -15,7 +15,7 @@
     "@jobs-app/ai": "0.1.0",
     "@jobs-app/shared": "0.1.0",
     "playwright": "^1.63.0",
-    "zod": "^3.24.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0"
