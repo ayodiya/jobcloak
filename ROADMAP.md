@@ -67,14 +67,14 @@ Legend: ✅ shipped · 🔜 in progress · ⬜ planned
 
 - Pipeline metrics: discovered → matched → prepared → reviewed → submitted
 - Source effectiveness, application outcomes, response tracking
-- Daily reports and notifications
+- ✅ Daily reports and notifications
 
 ## v1.0 — Stable Release ⬜
 
 - Hardening: security review, performance, dependencies, coverage, accessibility
 - Documented failure-recovery procedures
 - Community-contributed job sources and providers
-- Formal release process with tag + GitHub release notes
+- Formal release process with tag + GitHub release notes ✅ (conventions documented in CONTRIBUTING.md)
 
 ## Non-goals
 

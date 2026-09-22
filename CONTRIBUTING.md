@@ -249,6 +249,19 @@ We tag GitHub issues with `good first issue` for beginner-friendly work:
 
 Ways to find them: the `good first issue` label, or the issue templates. If an issue is unassigned, drop a comment and we will help you get oriented. See also [ROADMAP.md](./ROADMAP.md) for incoming work areas.
 
+## Releases & tags
+
+- Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html); the
+  changelog is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) — see
+  [CHANGELOG.md](./CHANGELOG.md) and update it in the same PR as the change.
+- `develop` is the integration branch; `main` holds released code only.
+- To release: open a PR from `develop` into `main` that moves `[Unreleased]` into a
+  `[<version>] - <YYYY-MM-DD>` section, then, after merge, create an annotated tag on
+  `main`: `git tag -a v<MAJOR>.<MINOR>.<PATCH> -m "Release <version>"`.
+- Tag format: `v<MAJOR>.<MINOR>.<PATCH>` (e.g. `v0.1.0`). Only `main` is tagged.
+- GitHub release notes are assembled from the CHANGELOG entries for that version.
+- Pre-`1.0.0` minor bumps are expected to carry breaking changes.
+
 ## Code of conduct
 
 Please note our [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) — be excellent to each other.

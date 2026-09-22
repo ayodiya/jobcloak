@@ -25,6 +25,7 @@
     "format:write": "prettier --write .",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "vitest run --config vitest.config.unit.ts",
+    "test:coverage": "vitest run --config vitest.config.unit.ts --coverage",
     "test:integration": "vitest run --config vitest.config.integration.ts",
     "test:browser": "npm run test:browser -w @jobs-app/browser",
     "test:web": "npm run test -w @jobs-app/web",
@@ -35,17 +36,24 @@
     "db:studio": "npm run studio -w @jobs-app/database"
   },
   "devDependencies": {
+    "@eslint/js": "^9.29.0",
     "@types/node": "^22.15.32",
+    "@vitest/coverage-v8": "^3.2.7",
     "concurrently": "^9.2.0",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
-    "@eslint/js": "^9.29.0",
     "globals": "^16.2.0",
     "prettier": "^3.5.3",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.33.0",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2",
+    "next": {
+      "postcss": "^8.5.28"
+    }
   },
   "allowScripts": {
     "esbuild@0.28.2": true,

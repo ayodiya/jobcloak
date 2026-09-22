@@ -76,7 +76,7 @@ export default async function Home() {
       </section>
 
       <section style={{ marginTop: '2rem', color: 'var(--muted)' }}>
-        <p>This shell becomes the full dashboard in the dashboard phase.</p>
+        <p>Web dashboard UI is not built yet — the API exposes listing routes for the planned MUI dashboard.</p>
         <p>
           Docs: <code>README.md</code> · Developer guide: <code>DEVELOPMENT.md</code>
         </p>

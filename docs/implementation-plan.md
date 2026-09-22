@@ -58,7 +58,7 @@ requirement extraction (deterministic + AI-assisted), source health, mock/fixtur
 edge-case tests.
 Verified: `typecheck`, `lint`, `test:unit` (173), `test:integration` (11), `build` — all green.
 
-### Phase 5 — Matching
+### Phase 5 — Matching ✅ (committed to `develop`)
 Deterministic weighted scoring (tech 30 / experience 20 / seniority 15 / role 15 /
 location 10 / domain 5 / salary 5), hard filters/disqualifiers, explainable results,
 confidence, persistence; AI-assisted interpretation only where deterministic data is thin.
@@ -66,7 +66,7 @@ confidence, persistence; AI-assisted interpretation only where deterministic dat
 `MatchingService` (idempotent per `jobId`); schema `JobMatch`/`JobMatchDimension`.
 Verified: `typecheck`, `lint`, `test:unit` (215), `test:integration` (14), `build` — all green.
 
-### Phase 6 — Application Generation
+### Phase 6 — Application Generation ✅ (committed to `develop`)
 Material model + versioning, tailored CV + cover letter + answers generation,
 factuality validation pipeline (claim extraction → evidence comparison → unsupported claim
 detection → regenerate/review), TXT/DOCX output (PDF deferred), snapshot pinned per submission.
@@ -77,7 +77,7 @@ TXT + DOCX export, prompt templates `documents.cv`/`documents.cover-letter`/`doc
 schema `EvidenceSnapshot`/`ApplicationMaterial`/`MaterialVersion`.
 Verified: `typecheck`, `lint`, `test:unit` (238), `test:integration` (18), `build` — all green.
 
-### Phase 7 — Browser Automation
+### Phase 7 — Browser Automation ✅ (committed to `develop`)
 Playwright session primitives `@jobs-app/browser`: `BrowserSession`
 (open/map/classify/mapValues/fill/fillQuestions/upload/gates/submit/verify/pause/resume/
 cancel/close + audit events), `harvestForm`/`buildFields`/`inferType`/`selectorFor`,
@@ -88,19 +88,44 @@ work-authorization are `stop` gates), `verifySubmission`
 Verified: `typecheck`, `lint`, `test:unit` (280), `test:integration` (18), `build`,
 `test:browser` (4) — all green.
 
-### Phase 8 — Dashboard
-Next.js + MUI + TanStack Query: /dashboard, /jobs, /jobs/:id, /matches, /applications,
-/applications/:id, /candidate(+evidence/cv), /automation, /sources, /settings, /audit.
-Search/filter/pagination/sort/status/loading/error/empty states.
+### Phase 8 — Dashboard ✅ (committed to `develop`)
+`@jobs-app/applications` lifecycle domain with event trail and session sink, database seed
+for dashboard data, and API listing routes (`/jobs`, `/matches`, `/applications`,
+`/dashboard`). Web UI remains the health-dashboard shell — the routed MUI dashboard listed
+below is deferred beyond this phase plan.
+Verified: `typecheck`, `lint`, `test:unit` (297), `test:integration` (41), `build` — all green.
 
-### Phase 9 — Scheduling & Notifications
-BullMQ repeatable discovery/matching, notifications channel, daily report; limits
-(discovery/prep/submission) enforced.
+### Phase 9 — Scheduling & Notifications ✅ (committed to `develop`)
+BullMQ repeatable discovery/matching, notifications channel (console + file), daily report;
+limits (discovery/prep/submission) enforced; `@jobs-app/notifications` registry + daily report,
+worker `limits`/`scheduler`/`processors`, `upsertSchedulers` on boot.
+Verified: `typecheck`, `lint`, `test:unit` (321), `test:integration` (41), `build` — all green.
 
-### Phase 10 — Hardening
+### Phase 10 — Hardening ✅ (committed to `develop`)
 Security review (threat model adherence), dependency/`npm audit`, coverage review, docs
 review, failure-recovery verification, accessibility pass, fresh-clone dry run, final
 checklist, tags/release notes conventions.
+Verified:
+- `npm audit --audit-level=high` clean — 0 high/critical, 2 moderate (both dev-only
+  `vitest` chain; accepted as documented risk). `postcss` + `deepmerge-ts` pinned via
+  `overrides` (no downgrades).
+- Threat-model adherence: API binds `127.0.0.1` (`API_HOST` default), `SECURITY.md` +
+  `.github/workflows/security.yml` present (audit/gitleaks/external-AI-call gates),
+  `.gitignore` covers `browser-profiles/` and `data/`; security-audit tool (secrets +
+  code) clean.
+- Coverage gated: source-only `test:coverage` with thresholds; measured
+  64.4% lines / 82.9% branches / 62.5% funcs / 64.4% stmts, added to CI.
+- Failure-recovery: `test:integration` 40 green against Postgres 18 + Redis 7; worker
+  limits/processors re-run-safe, daily-report reads Redis counters + BullMQ job counts.
+- Accessibility: web surface is a single static health page — semantic landmarks,
+  heading hierarchy, text-not-color status; no fixes required (MUI dashboard deferred).
+- Fresh clone: `git clone` + `npm ci` + `db:generate` (as in CI) → typecheck, lint,
+  unit (321), build all green.
+- Release conventions documented in CONTRIBUTING.md (semver, Keep a Changelog,
+  `v<MAJOR>.<MINOR>.<PATCH>` annotated tags on `main` only).
+Notes: Phase 8 scope corrected (dashboard API/seed shipped; routed MUI dashboard
+deferred); `vitest@3.2.7` intentionally kept below 5.x patched line (dev-only, CI gates
+at `--audit-level=high`).
 
 ## Commit strategy per phase
 
