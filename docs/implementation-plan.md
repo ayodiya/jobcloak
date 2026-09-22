@@ -58,7 +58,7 @@ requirement extraction (deterministic + AI-assisted), source health, mock/fixtur
 edge-case tests.
 Verified: `typecheck`, `lint`, `test:unit` (173), `test:integration` (11), `build` — all green.
 
-### Phase 5 — Matching
+### Phase 5 — Matching ✅ (committed to `develop`)
 Deterministic weighted scoring (tech 30 / experience 20 / seniority 15 / role 15 /
 location 10 / domain 5 / salary 5), hard filters/disqualifiers, explainable results,
 confidence, persistence; AI-assisted interpretation only where deterministic data is thin.
@@ -66,7 +66,7 @@ confidence, persistence; AI-assisted interpretation only where deterministic dat
 `MatchingService` (idempotent per `jobId`); schema `JobMatch`/`JobMatchDimension`.
 Verified: `typecheck`, `lint`, `test:unit` (215), `test:integration` (14), `build` — all green.
 
-### Phase 6 — Application Generation
+### Phase 6 — Application Generation ✅ (committed to `develop`)
 Material model + versioning, tailored CV + cover letter + answers generation,
 factuality validation pipeline (claim extraction → evidence comparison → unsupported claim
 detection → regenerate/review), TXT/DOCX output (PDF deferred), snapshot pinned per submission.
@@ -77,7 +77,7 @@ TXT + DOCX export, prompt templates `documents.cv`/`documents.cover-letter`/`doc
 schema `EvidenceSnapshot`/`ApplicationMaterial`/`MaterialVersion`.
 Verified: `typecheck`, `lint`, `test:unit` (238), `test:integration` (18), `build` — all green.
 
-### Phase 7 — Browser Automation
+### Phase 7 — Browser Automation ✅ (committed to `develop`)
 Playwright session primitives `@jobs-app/browser`: `BrowserSession`
 (open/map/classify/mapValues/fill/fillQuestions/upload/gates/submit/verify/pause/resume/
 cancel/close + audit events), `harvestForm`/`buildFields`/`inferType`/`selectorFor`,
@@ -88,14 +88,17 @@ work-authorization are `stop` gates), `verifySubmission`
 Verified: `typecheck`, `lint`, `test:unit` (280), `test:integration` (18), `build`,
 `test:browser` (4) — all green.
 
-### Phase 8 — Dashboard
+### Phase 8 — Dashboard ✅ (committed to `develop`)
 Next.js + MUI + TanStack Query: /dashboard, /jobs, /jobs/:id, /matches, /applications,
 /applications/:id, /candidate(+evidence/cv), /automation, /sources, /settings, /audit.
 Search/filter/pagination/sort/status/loading/error/empty states.
+Verified: `typecheck`, `lint`, `test:unit` (297), `test:integration` (41), `build` — all green.
 
-### Phase 9 — Scheduling & Notifications
-BullMQ repeatable discovery/matching, notifications channel, daily report; limits
-(discovery/prep/submission) enforced.
+### Phase 9 — Scheduling & Notifications ✅ (committed to `develop`)
+BullMQ repeatable discovery/matching, notifications channel (console + file), daily report;
+limits (discovery/prep/submission) enforced; `@jobs-app/notifications` registry + daily report,
+worker `limits`/`scheduler`/`processors`, `upsertSchedulers` on boot.
+Verified: `typecheck`, `lint`, `test:unit` (321), `test:integration` (41), `build` — all green.
 
 ### Phase 10 — Hardening
 Security review (threat model adherence), dependency/`npm audit`, coverage review, docs
