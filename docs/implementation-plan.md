@@ -89,9 +89,10 @@ Verified: `typecheck`, `lint`, `test:unit` (280), `test:integration` (18), `buil
 `test:browser` (4) — all green.
 
 ### Phase 8 — Dashboard ✅ (committed to `develop`)
-Next.js + MUI + TanStack Query: /dashboard, /jobs, /jobs/:id, /matches, /applications,
-/applications/:id, /candidate(+evidence/cv), /automation, /sources, /settings, /audit.
-Search/filter/pagination/sort/status/loading/error/empty states.
+`@jobs-app/applications` lifecycle domain with event trail and session sink, database seed
+for dashboard data, and API listing routes (`/jobs`, `/matches`, `/applications`,
+`/dashboard`). Web UI remains the health-dashboard shell — the routed MUI dashboard listed
+below is deferred beyond this phase plan.
 Verified: `typecheck`, `lint`, `test:unit` (297), `test:integration` (41), `build` — all green.
 
 ### Phase 9 — Scheduling & Notifications ✅ (committed to `develop`)

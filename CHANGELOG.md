@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Phase 5 — matching engine with explainable scoring.
 - Phase 6 — application material generation with factuality validation.
 - Phase 7 — browser automation with review stops.
-- Phase 8 — dashboard UI.
+- Phase 8 — applications lifecycle, dashboard data seed, and API listing routes.
 - Phase 9 — scheduling and notifications.
 - Phase 10 — hardening, security and documentation review.
 
