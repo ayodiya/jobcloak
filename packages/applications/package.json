@@ -1,0 +1,22 @@
+{
+  "name": "@jobs-app/applications",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Application lifecycle domain: per-job submissions with an immutable event trail, wired to browser session events and the dashboard.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@jobs-app/database": "*",
+    "@jobs-app/shared": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.3"
+  }
+}

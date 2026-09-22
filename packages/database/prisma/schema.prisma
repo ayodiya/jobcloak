@@ -87,6 +87,7 @@ model CandidateProfile {
   cvImports      CvImport[]
   snapshots      EvidenceSnapshot[]
   materials      ApplicationMaterial[]
+  applications   Application[]
 
   @@index([updatedAt])
 }
@@ -319,6 +320,7 @@ model Job {
 
   requirements JobRequirement[]
   match        JobMatch?
+  applications Application[]
 
   @@unique([sourceName, fingerprint])
   @@index([fingerprint])
@@ -486,5 +488,70 @@ model MaterialVersion {
   @@unique([materialId, version])
   @@index([materialId])
   @@index([snapshotId])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8 — Applications
+// ---------------------------------------------------------------------------
+
+/// Lifecycle of a single application submission (docs/architecture/automation.md).
+/// Successful submissions advance Prepared → InProgress → Submitted → Verified.
+/// Blocked or abandoned runs land in Failed/Cancelled; Rejected is a later
+/// manual outcome from the dashboard.
+enum ApplicationStatus {
+  Prepared
+  InProgress
+  Submitted
+  Verified
+  Failed
+  Cancelled
+  Rejected
+}
+
+/// One application to a job. `mode` records the automation mode used
+/// (safe/review/auto_apply) at submission time. `submissionKey` is the
+/// idempotency key — one submission per application + job (automation.md).
+/// Privacy: never stores credentials, cookies, session material, or values
+/// entered into form fields.
+model Application {
+  id            String            @id @default(uuid())
+  profileId     String
+  profile       CandidateProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  jobId         String
+  job           Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status        ApplicationStatus @default(Prepared)
+  mode          String
+  sourceName    String?
+  url           String
+  submissionKey String?           @unique
+  submittedAt   DateTime?
+  verifiedAt    DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  events ApplicationEvent[]
+
+  @@unique([profileId, jobId])
+  @@index([status])
+  @@index([sourceName])
+  @@index([createdAt])
+}
+
+/// Immutable per-application event trail. Browser session events (Phase 7) and
+/// domain transitions are appended here so an interrupted application resumes
+/// from its last recorded event (automation.md). `type` mirrors the browser
+/// SessionEventType or a domain transition ("application.created"). `payload`
+/// carries metadata only — never field values or session material.
+model ApplicationEvent {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          String
+  stage         String?
+  payload       Json?
+  at            DateTime    @default(now())
+
+  @@index([applicationId, at])
+  @@index([type])
 }
 
