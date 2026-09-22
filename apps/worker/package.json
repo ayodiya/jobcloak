@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@jobs-app/config": "*",
+    "@jobs-app/notifications": "*",
     "@jobs-app/shared": "*",
     "bullmq": "^5.40.0",
     "ioredis": "^5.5.0"
