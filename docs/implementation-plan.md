@@ -101,10 +101,31 @@ limits (discovery/prep/submission) enforced; `@jobs-app/notifications` registry 
 worker `limits`/`scheduler`/`processors`, `upsertSchedulers` on boot.
 Verified: `typecheck`, `lint`, `test:unit` (321), `test:integration` (41), `build` — all green.
 
-### Phase 10 — Hardening
+### Phase 10 — Hardening ✅ (committed to `develop`)
 Security review (threat model adherence), dependency/`npm audit`, coverage review, docs
 review, failure-recovery verification, accessibility pass, fresh-clone dry run, final
 checklist, tags/release notes conventions.
+Verified:
+- `npm audit --audit-level=high` clean — 0 high/critical, 2 moderate (both dev-only
+  `vitest` chain; accepted as documented risk). `postcss` + `deepmerge-ts` pinned via
+  `overrides` (no downgrades).
+- Threat-model adherence: API binds `127.0.0.1` (`API_HOST` default), `SECURITY.md` +
+  `.github/workflows/security.yml` present (audit/gitleaks/external-AI-call gates),
+  `.gitignore` covers `browser-profiles/` and `data/`; security-audit tool (secrets +
+  code) clean.
+- Coverage gated: source-only `test:coverage` with thresholds; measured
+  64.4% lines / 82.9% branches / 62.5% funcs / 64.4% stmts, added to CI.
+- Failure-recovery: `test:integration` 40 green against Postgres 18 + Redis 7; worker
+  limits/processors re-run-safe, daily-report reads Redis counters + BullMQ job counts.
+- Accessibility: web surface is a single static health page — semantic landmarks,
+  heading hierarchy, text-not-color status; no fixes required (MUI dashboard deferred).
+- Fresh clone: `git clone` + `npm ci` + `db:generate` (as in CI) → typecheck, lint,
+  unit (321), build all green.
+- Release conventions documented in CONTRIBUTING.md (semver, Keep a Changelog,
+  `v<MAJOR>.<MINOR>.<PATCH>` annotated tags on `main` only).
+Notes: Phase 8 scope corrected (dashboard API/seed shipped; routed MUI dashboard
+deferred); `vitest@3.2.7` intentionally kept below 5.x patched line (dev-only, CI gates
+at `--audit-level=high`).
 
 ## Commit strategy per phase
 

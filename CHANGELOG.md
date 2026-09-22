@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- CI now enforces unit coverage thresholds (lines 55 / branches 70 / statements 55 / functions 55) across package, API, and worker source.
+
 ### Fixed
 
 ### Security
+
+- Pinned `postcss` to ≥8.5.28 and `deepmerge-ts` to ≥8.0.2 via npm `overrides`, clearing the
+  high-severity PostCSS XSS / arbitrary-file-read and DeepmergeTS stack-exhaustion advisories
+  without version downgrades or breaking upgrades.
