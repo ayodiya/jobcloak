@@ -9,8 +9,15 @@ export default defineConfig({
     pool: 'threads',
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json'],
+      include: ['packages/*/src/**/*.ts', 'apps/api/src/**/*.ts', 'apps/worker/src/**/*.ts'],
       exclude: ['**/dist/**', '**/node_modules/**', '**/*.test.ts', '**/prisma/**'],
+      thresholds: {
+        statements: 55,
+        branches: 70,
+        functions: 55,
+        lines: 55,
+      },
     },
   },
   resolve: {
