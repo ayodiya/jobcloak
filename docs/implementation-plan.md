@@ -101,6 +101,17 @@ limits (discovery/prep/submission) enforced; `@jobs-app/notifications` registry 
 worker `limits`/`scheduler`/`processors`, `upsertSchedulers` on boot.
 Verified: `typecheck`, `lint`, `test:unit` (321), `test:integration` (41), `build` — all green.
 
+### Phase 11 — Dashboard UI ✅ (committed to `develop`)
+The routed MUI dashboard deferred in Phase 8: Next.js app-router pages (13 routes) using
+MUI v9 + TanStack Query. Foundation (providers/theme, AppShell navigation, typed API client
++ hooks, shared status/score/loading components) and pages: dashboard, jobs list/detail,
+matches, applications list/detail with inline status transitions, candidate, automation,
+sources, settings, audit. API/worker `.env` loader now climbs from the workspace cwd to the
+repo-root `.env`.
+Verified: `typecheck`, `lint`, `test:unit` (326), `test:coverage`, `build` (all workspaces,
+web with 13 routes), live smoke (`/health` database ok; `/dashboard`, `/jobs`, `/matches`
+serve real data; web dev serves `/dashboard` 200 with shell + theme rendered).
+
 ### Phase 10 — Hardening ✅ (committed to `develop`)
 Security review (threat model adherence), dependency/`npm audit`, coverage review, docs
 review, failure-recovery verification, accessibility pass, fresh-clone dry run, final

@@ -57,8 +57,11 @@ APPLICATION_DAILY_LIMIT=10
 LOG_LEVEL=info
 ```
 
-Copy `.env.example` → `.env` after cloning. The `.env.example` file documents every
-variable with safe development defaults.
+Copy `.env.example` → `.env` (repo root) after cloning. The `.env.example` file
+documents every variable with safe development defaults. The `.env` loader in
+`packages/config` resolves the file against the current directory and every
+ancestor directory, so workspace scripts (e.g. `npm run dev:api`, which run with
+`apps/api` as cwd) still pick up the repo-root `.env`.
 
 ## Testing strategy
 

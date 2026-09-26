@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Phase 11 — routed dashboard UI (Next.js + MUI + TanStack Query): dashboard,
+  jobs list/detail, matches, applications list/detail with status transitions,
+  candidate, automation, sources, settings, and audit pages.
+
 ### Changed
 
 ### Fixed
+
+- API and worker now locate the repo-root `.env` even when started through npm
+  workspace scripts (which set the workspace directory as cwd).
 
 ### Security
 
