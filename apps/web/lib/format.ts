@@ -36,5 +36,5 @@ export function formatSalary(
 }
 
 export function scorePercent(score: number): string {
-  return `${Math.round(score)}%`;
+  return `${Math.round(score * 100)}%`;
 }

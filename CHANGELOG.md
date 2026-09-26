@@ -9,10 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Web unit tests for the dashboard data layer (`lib/api.ts`, `lib/format.ts`),
+  wired into CI as a `Web tests` step.
+
 ### Changed
 
 ### Fixed
 
+- Dashboard score badges now render real percentages: `scorePercent` multiplies
+  the 0..1 match score by 100 before rounding, so e.g. a 0.59 match shows "59%"
+  instead of "1%".
 - Prisma client is now generated automatically on install (`postinstall`), fixing
   typecheck/lint in fresh clones and CI (previously the client only existed after a
   manual `npm run db:generate`, so CI typecheck failed before that step ran).
