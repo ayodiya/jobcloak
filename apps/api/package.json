@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.build.json --noEmit"
   },
   "dependencies": {
-    "@fastify/cors": "^10.0.2",
+    "@fastify/cors": "^11.3.0",
     "@jobs-app/applications": "*",
     "@jobs-app/config": "*",
     "@jobs-app/database": "*",
