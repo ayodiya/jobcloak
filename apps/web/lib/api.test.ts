@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 describe('listParams', () => {
-it('includes defined scalar values in insertion order', () => {
+  it('includes defined scalar values in insertion order', () => {
     expect(listParams({ page: 2, limit: 20, status: 'Active', remote: true })).toBe(
       '?page=2&limit=20&status=Active&remote=true',
     );
@@ -31,7 +31,9 @@ it('includes defined scalar values in insertion order', () => {
 
 describe('apiFetch', () => {
   it('returns the parsed JSON body on success', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ items: [] }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(apiFetch('/jobs?limit=1')).resolves.toEqual({ items: [] });

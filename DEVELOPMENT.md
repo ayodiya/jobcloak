@@ -4,25 +4,25 @@ Commands, workflows, and testing strategy for local development.
 
 ## Commands
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start dashboard (3000) + API (3100) in parallel |
-| `npm run dev:web` | Dashboard only |
-| `npm run dev:api` | API only |
-| `npm run dev:worker` | BullMQ workers + scheduler |
-| `npm run build` | Build all apps and packages |
-| `npm run test` | All tests (unit + integration) |
-| `npm run test:unit` | Unit tests only (fast, no external services) |
+| Command                    | Purpose                                                    |
+| -------------------------- | ---------------------------------------------------------- |
+| `npm run dev`              | Start dashboard (3000) + API (3100) in parallel            |
+| `npm run dev:web`          | Dashboard only                                             |
+| `npm run dev:api`          | API only                                                   |
+| `npm run dev:worker`       | BullMQ workers + scheduler                                 |
+| `npm run build`            | Build all apps and packages                                |
+| `npm run test`             | All tests (unit + integration)                             |
+| `npm run test:unit`        | Unit tests only (fast, no external services)               |
 | `npm run test:integration` | Integration tests (needs docker compose up postgres redis) |
-| `npm run test:browser` | Playwright browser tests |
-| `npm run lint` | ESLint across the monorepo |
-| `npm run typecheck` | TypeScript project-refs build (type-check only) |
-| `npm run format:check` | Prettier formatting check |
-| `npm run format:write` | Auto-fix formatting |
-| `npm run db:migrate` | Apply Prisma migrations |
-| `npm run db:generate` | Regenerate Prisma client |
-| `npm run db:seed` | Load development seed data |
-| `npm run db:reset` | Drop → migrate → seed (dev only) |
+| `npm run test:browser`     | Playwright browser tests                                   |
+| `npm run lint`             | ESLint across the monorepo                                 |
+| `npm run typecheck`        | TypeScript project-refs build (type-check only)            |
+| `npm run format:check`     | Prettier formatting check                                  |
+| `npm run format:write`     | Auto-fix formatting                                        |
+| `npm run db:migrate`       | Apply Prisma migrations                                    |
+| `npm run db:generate`      | Regenerate Prisma client                                   |
+| `npm run db:seed`          | Load development seed data                                 |
+| `npm run db:reset`         | Drop → migrate → seed (dev only)                           |
 
 ## Architecture at a glance
 
@@ -114,7 +114,7 @@ and shared across all developers.
 import { MockLLMProvider } from '@jobs-app/ai/testing';
 
 const llm = new MockLLMProvider({
-  structured: { /* return predefined Zod-safe objects */ }
+  structured: {/* return predefined Zod-safe objects */},
 });
 ```
 

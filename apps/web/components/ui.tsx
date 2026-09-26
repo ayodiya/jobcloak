@@ -101,21 +101,6 @@ export function MoneyText({
   return <>{formatSalary(min, max, currency)}</>;
 }
 
-export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
-  return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h4" component="h2">
-        {title}
-      </Typography>
-      {subtitle ? (
-        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-          {subtitle}
-        </Typography>
-      ) : null}
-    </Box>
-  );
-}
-
 export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, py: 8 }}>

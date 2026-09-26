@@ -3,7 +3,15 @@ import { z } from 'zod';
 export const AutomationModeSchema = z.enum(['safe', 'review', 'auto_apply']);
 export type AutomationMode = z.infer<typeof AutomationModeSchema>;
 
-export const LogLevelSchema = z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']);
+export const LogLevelSchema = z.enum([
+  'fatal',
+  'error',
+  'warn',
+  'info',
+  'debug',
+  'trace',
+  'silent',
+]);
 
 const IntPositive = z.coerce.number().int().min(0);
 
@@ -17,7 +25,10 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: LogLevelSchema.default('info'),
 
-  DATABASE_URL: z.string().url().default('postgresql://app:app@localhost:15432/jobs_applications?schema=public'),
+  DATABASE_URL: z
+    .string()
+    .url()
+    .default('postgresql://app:app@localhost:15432/jobs_applications?schema=public'),
   REDIS_URL: z.string().url().default('redis://localhost:6380'),
 
   OLLAMA_BASE_URL: z.string().url().default('http://localhost:11434'),
@@ -57,7 +68,9 @@ export function parseEnv(raw: Record<string, string | undefined> = process.env):
   if (cached) return cached;
   const result = envSchema.safeParse(raw);
   if (!result.success) {
-    const issues = result.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
+    const issues = result.error.issues
+      .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+      .join('; ');
     const error = new Error(`Invalid configuration: ${issues}`) as Error & { code?: string };
     error.code = 'CONFIG_ERROR';
     throw error;

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { AutomationModeSchema, envFileCandidates, envSchema, loadConfig, parseEnv, resetConfig } from './env.js';
+import {
+  AutomationModeSchema,
+  envFileCandidates,
+  envSchema,
+  loadConfig,
+  parseEnv,
+  resetConfig,
+} from './env.js';
 
 function minimalEnv(): Record<string, string | undefined> {
   return {
@@ -87,7 +94,12 @@ describe('AutomationModeSchema', () => {
 describe('envFileCandidates', () => {
   it('resolves a bare filename against cwd and every ancestor', () => {
     const candidates = envFileCandidates('/repo/apps/api', '.env');
-    expect(candidates).toEqual(['.env', '/repo/apps/api/.env', '/repo/apps/.env', '/repo/.env']);
+    expect(candidates).toEqual([
+      '.env',
+      '/repo/apps/api/.env',
+      '/repo/apps/.env',
+      '/repo/.env',
+    ]);
   });
 
   it('prefers the closest existing ancestor first', () => {

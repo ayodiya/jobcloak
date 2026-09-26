@@ -7,16 +7,16 @@ diff review → commit all pass.
 
 ## Assumptions (from environment inspection)
 
-| Item | State |
-|---|---|
-| Target dir | `/Users/mac/Documents/personal_dev/jobs-applications` (empty, not a git repo) |
-| Node / npm | v26.7.0 / 11.19.0 (pin `.nvmrc` to 22 for contributor LTS) |
-| Package manager | npm workspaces (chosen) |
-| Docker | 29.6.2, Postgres + Redis via compose |
-| Local Postgres | broken Homebrew service → **not** used; Docker Compose provides Postgres 18 |
-| Redis | available at :6379; run via compose in dev |
-| Ollama | 0.34.1 running; models: `qwen2.5-coder:3b` (default), `7b`, `llama3.1:8b` |
-| Playwright | 1.63.0 via npx; install chromium |
+| Item            | State                                                                         |
+| --------------- | ----------------------------------------------------------------------------- |
+| Target dir      | `/Users/mac/Documents/personal_dev/jobs-applications` (empty, not a git repo) |
+| Node / npm      | v26.7.0 / 11.19.0 (pin `.nvmrc` to 22 for contributor LTS)                    |
+| Package manager | npm workspaces (chosen)                                                       |
+| Docker          | 29.6.2, Postgres + Redis via compose                                          |
+| Local Postgres  | broken Homebrew service → **not** used; Docker Compose provides Postgres 18   |
+| Redis           | available at :6379; run via compose in dev                                    |
+| Ollama          | 0.34.1 running; models: `qwen2.5-coder:3b` (default), `7b`, `llama3.1:8b`     |
+| Playwright      | 1.63.0 via npx; install chromium                                              |
 
 ## Constraints & principles
 
@@ -33,32 +33,38 @@ diff review → commit all pass.
 ## Phase plan
 
 ### Phase 0 — Repository Foundation ✅ (committed to `develop`)
+
 `chore(repo)` scaffold → `docs(repo)` full doc set + ADRs → `ci(repo)` workflows/templates.
 
 ### Phase 1 — Application Foundation ✅ (committed to `develop`)
+
 Monorepo + TS strict + config + logging + errors + Postgres/Redis (compose) + Prisma
 schema/migrations/seed + API shell (Fastify, /health) + worker shell (BullMQ, queues) +
 dashboard shell (Next.js, health page).
 Verified: `typecheck`, `lint`, `test:unit` (36), `test:integration` (3), `build` — all green.
 
 ### Phase 2 — Candidate Intelligence ✅ (committed to `develop`)
+
 Candidate profile + experience + skills + projects + education + certifications +
 achievements + evidence; repositories, services, validation; CV import (text); seed data.
 Verified: `typecheck`, `lint`, `test:unit` (55), `test:integration` (6), `build` — all green.
 
 ### Phase 3 — AI ✅ (committed to `develop`)
+
 `LLMProvider`, `OllamaProvider`, `MockLLMProvider`, `ModelRouter`, `PromptManager`,
 `StructuredOutputParser`, `AIValidator`; evidence retrieval; tests incl. malformed JSON,
 timeouts, unavailable Ollama.
 Verified: `typecheck`, `lint`, `test:unit` (131), `test:integration` (6), `build` — all green.
 
 ### Phase 4 — Jobs ✅ (committed to `develop`)
+
 JobSource interface + registry, normalization, deduplication (fingerprint unique index),
 requirement extraction (deterministic + AI-assisted), source health, mock/fixture sources;
 edge-case tests.
 Verified: `typecheck`, `lint`, `test:unit` (173), `test:integration` (11), `build` — all green.
 
 ### Phase 5 — Matching ✅ (committed to `develop`)
+
 Deterministic weighted scoring (tech 30 / experience 20 / seniority 15 / role 15 /
 location 10 / domain 5 / salary 5), hard filters/disqualifiers, explainable results,
 confidence, persistence; AI-assisted interpretation only where deterministic data is thin.
@@ -67,6 +73,7 @@ confidence, persistence; AI-assisted interpretation only where deterministic dat
 Verified: `typecheck`, `lint`, `test:unit` (215), `test:integration` (14), `build` — all green.
 
 ### Phase 6 — Application Generation ✅ (committed to `develop`)
+
 Material model + versioning, tailored CV + cover letter + answers generation,
 factuality validation pipeline (claim extraction → evidence comparison → unsupported claim
 detection → regenerate/review), TXT/DOCX output (PDF deferred), snapshot pinned per submission.
@@ -78,6 +85,7 @@ schema `EvidenceSnapshot`/`ApplicationMaterial`/`MaterialVersion`.
 Verified: `typecheck`, `lint`, `test:unit` (238), `test:integration` (18), `build` — all green.
 
 ### Phase 7 — Browser Automation ✅ (committed to `develop`)
+
 Playwright session primitives `@jobs-app/browser`: `BrowserSession`
 (open/map/classify/mapValues/fill/fillQuestions/upload/gates/submit/verify/pause/resume/
 cancel/close + audit events), `harvestForm`/`buildFields`/`inferType`/`selectorFor`,
@@ -89,6 +97,7 @@ Verified: `typecheck`, `lint`, `test:unit` (280), `test:integration` (18), `buil
 `test:browser` (4) — all green.
 
 ### Phase 8 — Dashboard ✅ (committed to `develop`)
+
 `@jobs-app/applications` lifecycle domain with event trail and session sink, database seed
 for dashboard data, and API listing routes (`/jobs`, `/matches`, `/applications`,
 `/dashboard`). Web UI remains the health-dashboard shell — the routed MUI dashboard listed
@@ -96,27 +105,32 @@ below is deferred beyond this phase plan.
 Verified: `typecheck`, `lint`, `test:unit` (297), `test:integration` (41), `build` — all green.
 
 ### Phase 9 — Scheduling & Notifications ✅ (committed to `develop`)
+
 BullMQ repeatable discovery/matching, notifications channel (console + file), daily report;
 limits (discovery/prep/submission) enforced; `@jobs-app/notifications` registry + daily report,
 worker `limits`/`scheduler`/`processors`, `upsertSchedulers` on boot.
 Verified: `typecheck`, `lint`, `test:unit` (321), `test:integration` (41), `build` — all green.
 
 ### Phase 11 — Dashboard UI ✅ (committed to `develop`)
+
 The routed MUI dashboard deferred in Phase 8: Next.js app-router pages (13 routes) using
 MUI v9 + TanStack Query. Foundation (providers/theme, AppShell navigation, typed API client
-+ hooks, shared status/score/loading components) and pages: dashboard, jobs list/detail,
-matches, applications list/detail with inline status transitions, candidate, automation,
-sources, settings, audit. API/worker `.env` loader now climbs from the workspace cwd to the
-repo-root `.env`.
-Verified: `typecheck`, `lint`, `test:unit` (326), `test:coverage`, `build` (all workspaces,
-web with 13 routes), live smoke (`/health` database ok; `/dashboard`, `/jobs`, `/matches`
-serve real data; web dev serves `/dashboard` 200 with shell + theme rendered).
+
+- hooks, shared status/score/loading components) and pages: dashboard, jobs list/detail,
+  matches, applications list/detail with inline status transitions, candidate, automation,
+  sources, settings, audit. API/worker `.env` loader now climbs from the workspace cwd to the
+  repo-root `.env`.
+  Verified: `typecheck`, `lint`, `test:unit` (326), `test:coverage`, `build` (all workspaces,
+  web with 13 routes), live smoke (`/health` database ok; `/dashboard`, `/jobs`, `/matches`
+  serve real data; web dev serves `/dashboard` 200 with shell + theme rendered).
 
 ### Phase 10 — Hardening ✅ (committed to `develop`)
+
 Security review (threat model adherence), dependency/`npm audit`, coverage review, docs
 review, failure-recovery verification, accessibility pass, fresh-clone dry run, final
 checklist, tags/release notes conventions.
 Verified:
+
 - `npm audit --audit-level=high` clean — 0 high/critical, 2 moderate (both dev-only
   `vitest` chain; accepted as documented risk). `postcss` + `deepmerge-ts` pinned via
   `overrides` (no downgrades).
@@ -134,9 +148,9 @@ Verified:
   unit (321), build all green.
 - Release conventions documented in CONTRIBUTING.md (semver, Keep a Changelog,
   `v<MAJOR>.<MINOR>.<PATCH>` annotated tags on `main` only).
-Notes: Phase 8 scope corrected (dashboard API/seed shipped; routed MUI dashboard
-deferred); `vitest@3.2.7` intentionally kept below 5.x patched line (dev-only, CI gates
-at `--audit-level=high`).
+  Notes: Phase 8 scope corrected (dashboard API/seed shipped; routed MUI dashboard
+  deferred); `vitest@3.2.7` intentionally kept below 5.x patched line (dev-only, CI gates
+  at `--audit-level=high`).
 
 ## Commit strategy per phase
 
@@ -147,13 +161,13 @@ at `--audit-level=high`).
 
 ## Known risks & mitigation
 
-| Risk | Mitigation |
-|---|---|
+| Risk                  | Mitigation                                                                 |
+| --------------------- | -------------------------------------------------------------------------- |
 | 3b model JSON quality | StructuredOutputParser retry/augment/reject; deterministic parser as floor |
-| Scope size | Phase gates; no cosmetic shortcuts; ADRs cap decisions |
-| Broken local Postgres | Docker Compose only; CI service containers |
-| Browser fragility | Fixture-driven tests; human-in-the-loop stop points |
-| Prompt injection | PromptManager data/instruction separation; Zod; no model-driven logic |
+| Scope size            | Phase gates; no cosmetic shortcuts; ADRs cap decisions                     |
+| Broken local Postgres | Docker Compose only; CI service containers                                 |
+| Browser fragility     | Fixture-driven tests; human-in-the-loop stop points                        |
+| Prompt injection      | PromptManager data/instruction separation; Zod; no model-driven logic      |
 
 ## Definition of done for the project
 
