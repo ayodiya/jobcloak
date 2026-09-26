@@ -15,6 +15,6 @@
     "@jobs-app/database": "*",
     "@jobs-app/shared": "*",
     "fastify": "^5.2.1",
-    "ioredis": "^5.5.0"
+    "ioredis": "^6.0.0"
   }
 }
