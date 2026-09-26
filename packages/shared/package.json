@@ -11,6 +11,6 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "pino": "^9.7.0"
+    "pino": "^10.3.1"
   }
 }

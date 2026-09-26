@@ -51,7 +51,7 @@ export const envSchema = z.object({
   BROWSER_HEADLESS: z
     .string()
     .transform((v) => ['1', 'true', 'yes', 'on'].includes(v.toLowerCase()))
-    .default('false'),
+    .default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;

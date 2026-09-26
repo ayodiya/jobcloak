@@ -14,7 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Rolled up Dependabot dependency updates:
+  - Runtime: `zod` 4.6.5, `bullmq` 6.3.8, `ioredis` 6.0.0, `pino` 10.3.1,
+    `@fastify/cors` 11.3.0; `@prisma/client` pinned to `^6.19.3` (the resolved
+    version already in use) and now declared by `apps/api`, which imports it
+    directly.
+  - Toolchain majors reverted (TypeScript 7 / ESLint 10 / Vitest 5 group):
+    `typescript-eslint` does not support TS 7 yet and TS 7 removed `baseUrl`,
+    which would break the typecheck and lint gates.
+  - Prisma 7 held back: v7 removes `url` from schema files in favor of
+    `prisma.config.ts` plus a driver adapter — a separate migration.
+
 ### Fixed
+
+- `env.ts`: zod 4 changed `ZodDefault` semantics for transformed outputs —
+  `BROWSER_HEADLESS` now defaults to the boolean `false` directly.
 
 - Dashboard score badges now render real percentages: `scorePercent` multiplies
   the 0..1 match score by 100 before rounding, so e.g. a 0.59 match shows "59%"
