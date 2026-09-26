@@ -63,6 +63,9 @@ documents every variable with safe development defaults. The `.env` loader in
 ancestor directory, so workspace scripts (e.g. `npm run dev:api`, which run with
 `apps/api` as cwd) still pick up the repo-root `.env`.
 
+The Prisma client is generated automatically as a `postinstall` step, so a fresh
+`npm ci` is ready for typechecking, building, and testing without manual steps.
+
 ## Testing strategy
 
 - **Unit tests** (`packages/*/src/**/*.test.ts`): Fast, mocked dependencies.

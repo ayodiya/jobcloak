@@ -18,6 +18,7 @@
     "dev:web": "npm run dev -w @jobs-app/web",
     "dev:api": "npm run dev -w @jobs-app/api",
     "dev:worker": "npm run dev -w @jobs-app/worker",
+    "postinstall": "npm run db:generate",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit && tsc -p packages/browser/tsconfig.json --noEmit",
     "lint": "eslint . --max-warnings=0",
