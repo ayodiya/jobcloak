@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prisma client is now generated automatically on install (`postinstall`), fixing
   typecheck/lint in fresh clones and CI (previously the client only existed after a
   manual `npm run db:generate`, so CI typecheck failed before that step ran).
+- CI integration tests now run against `jobs_applications_test`: the test bootstrap
+  refuses DB names without `test`, so CI's previous `jobs_applications` URL aborted
+  every integration run at setup.
 
 ### Security
 
