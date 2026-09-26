@@ -19,10 +19,5 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0"
-  },
-  "allowScripts": {
-    "playwright@1.63.0": true,
-    "playwright-core@1.63.0": true,
-    "playwright-core@^1.63.0": true
   }
 }
