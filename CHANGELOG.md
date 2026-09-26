@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Security
+
+## [0.2.0] - 2026-09-26
+
+### Added
+
 - Phase 11 — routed dashboard UI (Next.js + MUI + TanStack Query): dashboard,
   jobs list/detail, matches, applications list/detail with status transitions,
   candidate, automation, sources, settings, and audit pages.
