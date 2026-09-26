@@ -80,14 +80,43 @@ export function resetConfig(raw: Record<string, string | undefined> = process.en
 }
 
 /**
+ * Ordered `.env` file candidates to attempt, closest first. Used because npm
+ * workspace scripts run with the workspace (e.g. `apps/api`) as their cwd while
+ * the monorepo `.env` lives at the repo root.
+ *
+ * - `given === '.env'` (or a bare filename) is resolved against `cwd` and every
+ *   ancestor directory.
+ * - A path containing a directory is resolved against `cwd` only.
+ * - An absolute `given` is used as-is.
+ */
+export function envFileCandidates(cwd: string, given: string): string[] {
+  const candidates: string[] = [given];
+  if (!given.startsWith('/')) {
+    if (!given.includes('/')) {
+      const parts = cwd.split('/').filter(Boolean);
+      for (let i = parts.length; i > 0; i -= 1) {
+        candidates.push(`/${parts.slice(0, i).join('/')}/${given}`);
+      }
+    } else {
+      candidates.push(`${cwd.replace(/\/+$/, '')}/${given}`);
+    }
+  }
+  return Array.from(new Set(candidates));
+}
+
+/**
  * Load a `.env` file into process.env using Node's native loader. No-op when
- * the file is absent (callers that already have env set — e.g. CI — are fine).
+ * no candidate file is present (callers that already have env set — e.g. CI —
+ * are fine).
  */
 export function loadEnvFileIfExists(path: string = '.env'): void {
-  try {
-    process.loadEnvFile(path);
-  } catch {
-    // file not found is expected in CI / production
+  for (const candidate of envFileCandidates(process.cwd(), path)) {
+    try {
+      process.loadEnvFile(candidate);
+      return;
+    } catch {
+      // candidate not present; try the next
+    }
   }
 }
 

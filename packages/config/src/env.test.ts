@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AutomationModeSchema, envSchema, loadConfig, parseEnv, resetConfig } from './env.js';
+import { AutomationModeSchema, envFileCandidates, envSchema, loadConfig, parseEnv, resetConfig } from './env.js';
 
 function minimalEnv(): Record<string, string | undefined> {
   return {
@@ -81,6 +81,39 @@ describe('AutomationModeSchema', () => {
     expect(AutomationModeSchema.parse('review')).toBe('review');
     expect(AutomationModeSchema.parse('auto_apply')).toBe('auto_apply');
     expect(AutomationModeSchema.safeParse('nope').success).toBe(false);
+  });
+});
+
+describe('envFileCandidates', () => {
+  it('resolves a bare filename against cwd and every ancestor', () => {
+    const candidates = envFileCandidates('/repo/apps/api', '.env');
+    expect(candidates).toEqual(['.env', '/repo/apps/api/.env', '/repo/apps/.env', '/repo/.env']);
+  });
+
+  it('prefers the closest existing ancestor first', () => {
+    const candidates = envFileCandidates('/repo/packages/shared/src', '.env');
+    expect(candidates).toEqual([
+      '.env',
+      '/repo/packages/shared/src/.env',
+      '/repo/packages/shared/.env',
+      '/repo/packages/.env',
+      '/repo/.env',
+    ]);
+  });
+
+  it('treats a directory-relative path as cwd-anchored only', () => {
+    const candidates = envFileCandidates('/repo/apps/api', 'config/e2e.env');
+    expect(candidates).toEqual(['config/e2e.env', '/repo/apps/api/config/e2e.env']);
+  });
+
+  it('uses an absolute path as-is', () => {
+    const candidates = envFileCandidates('/repo/apps/api', '/etc/jobs.env');
+    expect(candidates).toEqual(['/etc/jobs.env']);
+  });
+
+  it('deduplicates the cwd candidate', () => {
+    const candidates = envFileCandidates('/repo/apps/api', '.env');
+    expect(candidates.filter((candidate) => candidate === '.env').length).toBe(1);
   });
 });
 
