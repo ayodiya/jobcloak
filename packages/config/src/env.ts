@@ -41,6 +41,16 @@ export const envSchema = z.object({
   APPLICATION_DAILY_LIMIT: IntPositive.default(10),
   JOB_DISCOVERY_DAILY_LIMIT: IntPositive.default(50),
   APPLICATION_PREPARATION_DAILY_LIMIT: IntPositive.default(20),
+  /**
+   * Sources crawled on each scheduled discovery run. Sourced content mirrors
+   * the remote/Nigeria/Germany/Japan boards; `fixture` (dev data) and
+   * `sponsorship` (a filtered view of arbeitnow) are excluded by default.
+   */
+  JOB_DISCOVERY_SOURCES: z
+    .string()
+    .default(
+      'remoteok,remotive,jobicy,arbeitnow,myjobmag,jobzilla,wantedly,japan-dev,berlinstartupjobs',
+    ),
 
   API_HOST: z.string().default('127.0.0.1'),
   API_PORT: IntPositive.default(3100),

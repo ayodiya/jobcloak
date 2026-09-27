@@ -143,6 +143,7 @@ describe('envSchema shape', () => {
       'AUTO_APPLY_THRESHOLD',
       'APPLICATION_DAILY_LIMIT',
       'JOB_DISCOVERY_DAILY_LIMIT',
+      'JOB_DISCOVERY_SOURCES',
       'APPLICATION_PREPARATION_DAILY_LIMIT',
       'API_HOST',
       'API_PORT',

@@ -1,5 +1,6 @@
 import type { Processor, Queue } from 'bullmq';
 import type { Env } from '@jobs-app/config';
+import type { DiscoverySummary } from '@jobs-app/jobs';
 import {
   buildDailyReport,
   dailyReportToMessage,
@@ -29,17 +30,24 @@ export interface ProcessorDeps {
   store: LimitStore;
   /** Queue name → live Queue; the daily report reads `getJobCounts` from these. */
   queues: ReadonlyMap<QueueName, Queue>;
+  /**
+   * Discovery callback used by the `jobDiscovery` processor. Injected by the
+   * worker entrypoint and backed by `JobService.discover`, which already
+   * records source health (and never throws) internally.
+   */
+  discover?: (sourceName: string) => Promise<DiscoverySummary>;
 }
 
 /**
  * Daily-limit gate. Jobs past the cap complete successfully (a repeatable
  * that throws would retry forever and pile up failures) — they are skipped
- * with a warning notification instead. Domain work attaches as `inner` when
- * handlers land; until then the gate still enforces the configured budget.
+ * with a warning notification instead. Optional `inner` domain work runs
+ * only when the gate passes.
  */
 export function createLimitGuardedProcessor(
   kind: LimitKind,
   deps: ProcessorDeps,
+  inner?: Processor<unknown>,
 ): Processor<unknown> {
   return async (job) =>
     withCorrelation(async () => {
@@ -67,8 +75,79 @@ export function createLimitGuardedProcessor(
         { kind, jobId: job.id, used: decision.used, remaining: decision.remaining },
         'daily limit gate passed',
       );
-      return { skipped: false, kind, used: decision.used, remaining: decision.remaining };
+      const work = inner ? await inner(job) : undefined;
+      return { skipped: false, kind, used: decision.used, remaining: decision.remaining, work };
     });
+}
+
+export interface DiscoveryRunResult {
+  source: string;
+  healthy: boolean;
+  fetched?: number;
+  created?: number;
+  updated?: number;
+  rejected?: number;
+  requirementCount?: number;
+  error?: string;
+}
+
+function configuredSources(deps: ProcessorDeps, data: unknown): string[] {
+  if (typeof data === 'object' && data !== null) {
+    const raw = (data as Record<string, unknown>).sources;
+    const list = Array.isArray(raw)
+      ? raw.filter((v): v is string => typeof v === 'string')
+      : [];
+    if (list.length > 0) return list;
+  }
+  return deps.config.JOB_DISCOVERY_SOURCES.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Scheduled job-board discovery: crawl every configured source once per run,
+ * persisting new listings and refreshing existing ones via the DB-backed
+ * JobService. A failed source is recorded (health) per-source and reported,
+ * never thrown — a resilient board must not kill the whole run.
+ */
+export function createJobDiscoveryProcessor(deps: ProcessorDeps): Processor<unknown> {
+  return createLimitGuardedProcessor('jobDiscovery', deps, async (job) => {
+    if (!deps.discover) {
+      deps.logger.warn(
+        { jobId: job.id, name: job.name },
+        'discovery requested but no JobService is wired; acknowledging',
+      );
+      return { wired: false };
+    }
+    const sources = configuredSources(deps, job.data);
+    deps.logger.info({ jobId: job.id, sources }, 'starting discovery run');
+    const results: DiscoveryRunResult[] = [];
+    for (const source of sources) {
+      try {
+        const summary = await deps.discover(source);
+        results.push({ source, ...summary });
+        deps.logger.info(
+          {
+            source,
+            fetched: summary.fetched,
+            created: summary.created,
+            updated: summary.updated,
+            rejected: summary.rejected,
+          },
+          'source discovered',
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        results.push({ source, healthy: false, error: message });
+        deps.logger.error({ source, error: message }, 'source discovery crashed');
+      }
+    }
+    const discovered = results.filter((r) => r.healthy).length;
+    const failed = results.length - discovered;
+    const created = results.reduce((n, r) => n + (r.created ?? 0), 0);
+    const updated = results.reduce((n, r) => n + (r.updated ?? 0), 0);
+    return { requested: sources.length, discovered, failed, created, updated, results };
+  });
 }
 
 function toNotificationMessage(data: unknown, fallbackAt: string): NotificationMessage {

@@ -1,4 +1,5 @@
 import { parseEnv } from '@jobs-app/config';
+import type { DiscoverySummary } from '@jobs-app/jobs';
 import {
   createNotificationRegistry,
   type NotificationChannel,
@@ -8,6 +9,7 @@ import type { Job, Queue } from 'bullmq';
 import { describe, expect, it, vi } from 'vitest';
 import { limitKey, utcDate, type LimitStore } from '../src/limits.js';
 import {
+  createJobDiscoveryProcessor,
   createLimitGuardedProcessor,
   createLogOnlyProcessor,
   createNotificationsProcessor,
@@ -19,12 +21,11 @@ const config = parseEnv({
   JOB_DISCOVERY_DAILY_LIMIT: '1',
   APPLICATION_PREPARATION_DAILY_LIMIT: '1',
   APPLICATION_DAILY_LIMIT: '1',
+  JOB_DISCOVERY_SOURCES: 'remoteok,wantedly',
 });
 
 function fakeStore(initial: Record<string, string> = {}): LimitStore {
-  const data = new Map<string, number>(
-    Object.entries(initial).map(([k, v]) => [k, Number(v)]),
-  );
+  const data = new Map<string, number>(Object.entries(initial).map(([k, v]) => [k, Number(v)]));
   return {
     async incr(key) {
       const next = (data.get(key) ?? 0) + 1;
@@ -70,6 +71,7 @@ function makeDeps(overrides: Partial<ProcessorDeps> & { sink?: NotificationMessa
     registry,
     store: overrides.store ?? fakeStore(),
     queues: overrides.queues ?? new Map<QueueName, Queue>(),
+    ...(overrides.discover !== undefined ? { discover: overrides.discover } : {}),
   };
   return { deps, sink, logger, registry };
 }
@@ -86,7 +88,12 @@ describe('createLimitGuardedProcessor', () => {
 
     const result = await processor(makeJob());
 
-    expect(result).toMatchObject({ skipped: false, kind: 'jobDiscovery', used: 1, remaining: 0 });
+    expect(result).toMatchObject({
+      skipped: false,
+      kind: 'jobDiscovery',
+      used: 1,
+      remaining: 0,
+    });
     expect(sink).toHaveLength(0);
     expect(logger.warn).not.toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalledTimes(1);
@@ -103,7 +110,12 @@ describe('createLimitGuardedProcessor', () => {
 
     const result = await processor(makeJob());
 
-    expect(result).toMatchObject({ skipped: true, kind: 'jobDiscovery', used: 1, remaining: 0 });
+    expect(result).toMatchObject({
+      skipped: true,
+      kind: 'jobDiscovery',
+      used: 1,
+      remaining: 0,
+    });
     expect(logger.warn).toHaveBeenCalledTimes(1);
     expect(logger.info).not.toHaveBeenCalled();
     expect(sink).toHaveLength(1);
@@ -112,6 +124,104 @@ describe('createLimitGuardedProcessor', () => {
       title: 'Daily limit reached: jobDiscovery',
     });
     expect(sink[0]?.body).toContain('1/1');
+  });
+});
+
+describe('createJobDiscoveryProcessor', () => {
+  it('crawls each configured source when the limit gate passes', async () => {
+    const discover = vi.fn(async (sourceName: string): Promise<DiscoverySummary> => ({
+      sourceName,
+      fetched: 2,
+      rejected: 0,
+      created: 2,
+      updated: 0,
+      requirementCount: 3,
+      healthy: true,
+    }));
+    const { deps } = makeDeps({ discover });
+    const processor = createJobDiscoveryProcessor(deps);
+
+    const result = await processor(makeJob());
+
+    expect(discover).toHaveBeenCalledTimes(2);
+    expect(discover).toHaveBeenCalledWith('remoteok');
+    expect(discover).toHaveBeenCalledWith('wantedly');
+    expect(result).toMatchObject({ skipped: false, kind: 'jobDiscovery' });
+    expect(result.work).toMatchObject({ requested: 2, discovered: 2, failed: 0, created: 4 });
+  });
+
+  it('collects crashed sources without failing the run', async () => {
+    const discover = vi.fn(async (sourceName: string) => {
+      if (sourceName === 'remoteok') throw new Error('boom');
+      return {
+        sourceName,
+        fetched: 1,
+        rejected: 0,
+        created: 1,
+        updated: 0,
+        requirementCount: 0,
+        healthy: true,
+      } satisfies DiscoverySummary;
+    });
+    const { deps } = makeDeps({ discover });
+    const processor = createJobDiscoveryProcessor(deps);
+
+    const result = await processor(makeJob());
+
+    expect(result.work).toMatchObject({ requested: 2, discovered: 1, failed: 1, created: 1 });
+    expect(result.work.results[0]).toMatchObject({
+      source: 'remoteok',
+      healthy: false,
+      error: 'boom',
+    });
+  });
+
+  it('prefers job-provided sources over the configured default', async () => {
+    const discover = vi.fn(async (_sourceName: string): Promise<DiscoverySummary> => ({
+      sourceName: 'any',
+      fetched: 0,
+      rejected: 0,
+      created: 0,
+      updated: 0,
+      requirementCount: 0,
+      healthy: true,
+    }));
+    const { deps } = makeDeps({ discover });
+    const processor = createJobDiscoveryProcessor(deps);
+
+    await processor(makeJob({ data: { sources: ['japan-dev'] } }));
+
+    expect(discover).toHaveBeenCalledTimes(1);
+    expect(discover).toHaveBeenCalledWith('japan-dev');
+  });
+
+  it('acknowledges when no JobService is wired', async () => {
+    const { deps, logger } = makeDeps();
+    const processor = createJobDiscoveryProcessor(deps);
+
+    const result = await processor(makeJob());
+
+    expect(result.work).toMatchObject({ wired: false });
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('skips discovery entirely when the daily limit is exhausted', async () => {
+    const discover = vi.fn();
+    const consumedKey = limitKey('jobDiscovery', utcDate());
+    const { deps, sink } = makeDeps({
+      discover,
+      store: fakeStore({ [consumedKey]: '1' }),
+    });
+    const processor = createJobDiscoveryProcessor(deps);
+
+    const result = await processor(makeJob());
+
+    expect(discover).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ skipped: true });
+    expect(sink[0]).toMatchObject({
+      severity: 'warning',
+      title: 'Daily limit reached: jobDiscovery',
+    });
   });
 });
 
@@ -125,7 +235,9 @@ describe('createNotificationsProcessor', () => {
     };
     const notifications = {
       name: 'notifications',
-      getJobCounts: vi.fn().mockResolvedValue({ completed: 1, failed: 0, waiting: 0, active: 0 }),
+      getJobCounts: vi
+        .fn()
+        .mockResolvedValue({ completed: 1, failed: 0, waiting: 0, active: 0 }),
     };
     const queues = new Map<QueueName, Queue>([
       ['jobDiscovery', discovery as unknown as Queue],
@@ -145,7 +257,9 @@ describe('createNotificationsProcessor', () => {
     expect(sink).toHaveLength(1);
     const message = sink[0]!;
     expect(message.title).toMatch(/^Daily report — \d{4}-\d{2}-\d{2}$/);
-    expect(message.body).toContain('- jobDiscovery: 4 completed, 1 failed, 2 waiting, 0 active');
+    expect(message.body).toContain(
+      '- jobDiscovery: 4 completed, 1 failed, 2 waiting, 0 active',
+    );
     expect(message.body).toContain('- application: 0/1');
     // failures present, no exhausted limit
     expect(message.severity).toBe('warning');

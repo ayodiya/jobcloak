@@ -1,7 +1,7 @@
 import { NotFoundError, ValidationError } from '@jobs-app/shared';
-import { normalizeText } from '../../normalize.js';
 import type { Job, JobSearchParams } from '../../types.js';
 import type { JobSource, JobSourceFactory } from '../JobSource.js';
+import { filterJobs } from '../filter.js';
 
 export interface FixtureJobSourceOptions {
   name?: string;
@@ -24,23 +24,7 @@ export class FixtureJobSource implements JobSource {
   }
 
   async search(params: JobSearchParams = {}): Promise<Job[]> {
-    const query = params.query ? normalizeText(params.query).toLowerCase() : undefined;
-    const location = params.location ? normalizeText(params.location).toLowerCase() : undefined;
-
-    const matches = this.jobs.filter((job) => {
-      if (query && !`${job.title} ${job.company} ${job.description}`.toLowerCase().includes(query)) {
-        return false;
-      }
-      if (location && !(job.location ?? '').toLowerCase().includes(location)) return false;
-      if (params.remote !== undefined && Boolean(job.remote) !== params.remote) return false;
-      if (params.since && job.postedAt && job.postedAt < params.since) return false;
-      return true;
-    });
-
-    const page = params.page ?? 1;
-    const limit = params.limit ?? matches.length;
-    const start = Math.max(0, (page - 1) * limit);
-    return matches.slice(start, start + limit);
+    return filterJobs(this.jobs, params);
   }
 
   async getJob(url: string): Promise<Job> {
@@ -73,4 +57,5 @@ function parseFixtureOptions(options: unknown): FixtureJobSourceOptions {
   return { name, jobs: jobs as Job[] | undefined };
 }
 
-export const fixtureJobSourceFactory: JobSourceFactory = (options) => createFixtureJobSource(options);
+export const fixtureJobSourceFactory: JobSourceFactory = (options) =>
+  createFixtureJobSource(options);

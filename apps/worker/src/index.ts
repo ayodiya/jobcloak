@@ -1,15 +1,18 @@
 import { resolve } from 'node:path';
 import type { Queue } from 'bullmq';
+import { prisma } from '@jobs-app/database';
 import { loadConfig, loadEnvFileIfExists } from '@jobs-app/config';
+import { JobService } from '@jobs-app/jobs';
 import {
   createConsoleChannel,
   createFileChannel,
   createNotificationRegistry,
 } from '@jobs-app/notifications';
-import { createLogger } from '@jobs-app/shared';
+import { ACTIVITY_CHANNEL, createLogger, type WorkerActivityEvent } from '@jobs-app/shared';
 import { Redis } from 'ioredis';
 import { redisLimitStore } from './limits.js';
 import {
+  createJobDiscoveryProcessor,
   createLimitGuardedProcessor,
   createLogOnlyProcessor,
   createNotificationsProcessor,
@@ -37,11 +40,57 @@ const queues = new Map<QueueName, Queue>(
   QUEUE_NAMES.map((name) => [name, createQueue(name, config)]),
 );
 
-const deps: ProcessorDeps = { config, logger, registry, store, queues };
+// Discovery persists listings and source health into Postgres. Injected as
+// `discover` so processor deps stay decoupled from the jobs package.
+const jobService = new JobService();
+const deps: ProcessorDeps = {
+  config,
+  logger,
+  registry,
+  store,
+  queues,
+  discover: (sourceName) => jobService.discover({ sourceName }),
+};
+
+// Dedicated publish client for the realtime activity feed. Subscribers
+// (the API) listen on one redis connection; publishing on a second
+// connection avoids buffering contention with the worker connections.
+const activityPub = redis.duplicate({ maxRetriesPerRequest: null });
+
+/**
+ * Fire-and-forget publisher for the realtime activity feed. Every finished
+ * job is broadcast on the shared pub/sub channel and appended to the audit
+ * trail so the dashboard can replay history across restarts.
+ */
+const publishActivity = async (event: WorkerActivityEvent): Promise<void> => {
+  try {
+    await activityPub.publish(ACTIVITY_CHANNEL, JSON.stringify(event));
+  } catch (error) {
+    logger.warn({ error: String(error) }, 'activity pub/sub publish failed');
+  }
+  try {
+    await prisma.auditLog.create({
+      data: {
+        action: `worker.${event.outcome}`,
+        entityType: event.queue,
+        entityId: event.jobId,
+        metadata: {
+          jobName: event.jobName,
+          durationMs: event.durationMs,
+          error: event.error,
+          detail: event.detail,
+          at: event.at,
+        },
+      },
+    });
+  } catch (error) {
+    logger.warn({ error: String(error) }, 'activity audit write failed');
+  }
+};
 
 const registrations = [
   registerProcessor('notifications', createNotificationsProcessor(deps)),
-  registerProcessor('jobDiscovery', createLimitGuardedProcessor('jobDiscovery', deps)),
+  registerProcessor('jobDiscovery', createJobDiscoveryProcessor(deps)),
   registerProcessor(
     'applicationPreparation',
     createLimitGuardedProcessor('applicationPreparation', deps),
@@ -55,13 +104,16 @@ const registrations = [
 const schedulerIds = await upsertSchedulers(queues);
 logger.info({ schedulers: schedulerIds }, 'repeatable schedulers upserted');
 
-const workers = await startWorkers({ config, logger }, registrations);
+const workers = await startWorkers({ config, logger, publish: publishActivity }, registrations);
 
 const shutdown = async (signal: string): Promise<void> => {
   logger.info({ signal }, 'shutting down workers');
   await stopWorkers(workers);
   await Promise.allSettled([...queues.values()].map((queue) => queue.close()));
+
+  await activityPub.quit().catch(() => undefined);
   await redis.quit().catch(() => undefined);
+  await prisma.$disconnect().catch(() => undefined);
   process.exit(0);
 };
 

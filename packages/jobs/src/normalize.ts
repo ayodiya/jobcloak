@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { computeFingerprint, normalizeUrl } from './fingerprint.js';
 import type { Job, NormalizedJob } from './types.js';
 
-const REMOTE_PATTERN = /(^|[^a-z])(remote|fully remote|work from home|wfh|anywhere|distributed team)([^a-z]|$)/i;
+const REMOTE_PATTERN =
+  /(^|[^a-z])(remote|fully remote|work from home|wfh|anywhere|distributed team)([^a-z]|$)/i;
 
 const ENTITIES: Record<string, string> = {
   '&amp;': '&',
@@ -28,6 +29,7 @@ export function toPlainText(input: string): string {
     .replace(/<\s*br\s*\/?>/gi, '\n')
     .replace(/<\s*\/\s*(p|div|li|h[1-6]|tr)\s*>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
     .replace(/&[a-z#0-9]+;/gi, (entity) => ENTITIES[entity.toLowerCase()] ?? entity)
     .replace(/[ \t\f\v]+/g, ' ')
     .replace(/ *\n */g, '\n')

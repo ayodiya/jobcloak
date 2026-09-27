@@ -1,6 +1,18 @@
 import { NotFoundError, ValidationError } from '@jobs-app/shared';
 import type { JobSource, JobSourceFactory } from './JobSource.js';
+import {
+  arbeitnowJobSourceFactory,
+  sponsorshipJobSourceFactory,
+} from './arbeitnow/ArbeitnowJobSource.js';
+import { berlinStartupJobsJobSourceFactory } from './berlinstartupjobs/BerlinStartupJobsJobSource.js';
 import { fixtureJobSourceFactory } from './fixture/FixtureJobSource.js';
+import { japanDevJobSourceFactory } from './japandev/JapanDevJobSource.js';
+import { jobicyJobSourceFactory } from './jobicy/JobicyJobSource.js';
+import { jobzillaJobSourceFactory } from './jobzilla/JobzillaJobSource.js';
+import { myJobMagJobSourceFactory } from './myjobmag/MyJobMagJobSource.js';
+import { remoteOkJobSourceFactory } from './remoteok/RemoteOkJobSource.js';
+import { remotiveJobSourceFactory } from './remotive/RemotiveJobSource.js';
+import { wantedlyJobSourceFactory } from './wantedly/WantedlyJobSource.js';
 
 const registry = new Map<string, JobSourceFactory>();
 
@@ -38,4 +50,14 @@ export function clearJobSources(): void {
   registry.clear();
 }
 
+registerJobSource('arbeitnow', arbeitnowJobSourceFactory);
+registerJobSource('berlinstartupjobs', berlinStartupJobsJobSourceFactory);
 registerJobSource('fixture', fixtureJobSourceFactory);
+registerJobSource('japan-dev', japanDevJobSourceFactory);
+registerJobSource('jobicy', jobicyJobSourceFactory);
+registerJobSource('jobzilla', jobzillaJobSourceFactory);
+registerJobSource('myjobmag', myJobMagJobSourceFactory);
+registerJobSource('remoteok', remoteOkJobSourceFactory);
+registerJobSource('remotive', remotiveJobSourceFactory);
+registerJobSource('sponsorship', sponsorshipJobSourceFactory);
+registerJobSource('wantedly', wantedlyJobSourceFactory);
