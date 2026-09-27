@@ -34,11 +34,46 @@ async function seedCandidate(): Promise<boolean> {
       currency: 'EUR',
       skills: {
         create: [
-          { name: 'TypeScript', key: 'typescript', category: 'Language', level: 'Expert', years: 8, lastUsedYear: 2026 },
-          { name: 'Node.js', key: 'node.js', category: 'Runtime', level: 'Expert', years: 8, lastUsedYear: 2026 },
-          { name: 'PostgreSQL', key: 'postgresql', category: 'Database', level: 'Advanced', years: 7, lastUsedYear: 2026 },
-          { name: 'Redis', key: 'redis', category: 'Database', level: 'Advanced', years: 5, lastUsedYear: 2025 },
-          { name: 'Kubernetes', key: 'kubernetes', category: 'Platform', level: 'Intermediate', years: 3, lastUsedYear: 2025 },
+          {
+            name: 'TypeScript',
+            key: 'typescript',
+            category: 'Language',
+            level: 'Expert',
+            years: 8,
+            lastUsedYear: 2026,
+          },
+          {
+            name: 'Node.js',
+            key: 'node.js',
+            category: 'Runtime',
+            level: 'Expert',
+            years: 8,
+            lastUsedYear: 2026,
+          },
+          {
+            name: 'PostgreSQL',
+            key: 'postgresql',
+            category: 'Database',
+            level: 'Advanced',
+            years: 7,
+            lastUsedYear: 2026,
+          },
+          {
+            name: 'Redis',
+            key: 'redis',
+            category: 'Database',
+            level: 'Advanced',
+            years: 5,
+            lastUsedYear: 2025,
+          },
+          {
+            name: 'Kubernetes',
+            key: 'kubernetes',
+            category: 'Platform',
+            level: 'Intermediate',
+            years: 3,
+            lastUsedYear: 2025,
+          },
         ],
       },
     },
@@ -83,7 +118,10 @@ async function seedCandidate(): Promise<boolean> {
         'Design and operate event-driven payment services handling 4M requests/day',
         'Set and review the backend on-call and incident-response practices',
       ],
-      achievements: ['Reduced checkout API p99 latency by 40%', 'Mentored four engineers, three promoted within 18 months'],
+      achievements: [
+        'Reduced checkout API p99 latency by 40%',
+        'Mentored four engineers, three promoted within 18 months',
+      ],
       evidenceId: latencyEvidence.id,
       sortOrder: 0,
     },
@@ -94,7 +132,8 @@ async function seedCandidate(): Promise<boolean> {
       profileId: profile.id,
       name: 'Ledger reconciliation service',
       role: 'Tech lead',
-      description: 'Built a reconciliation pipeline that closes the daily ledger within 15 minutes.',
+      description:
+        'Built a reconciliation pipeline that closes the daily ledger within 15 minutes.',
       technologies: ['TypeScript', 'PostgreSQL', 'Redis'],
       achievements: ['Cut daily reconciliation window from 6 hours to 15 minutes'],
       startDate: new Date('2023-01-01'),
@@ -144,7 +183,8 @@ async function seedCandidate(): Promise<boolean> {
   await prisma.cvImport.create({
     data: {
       profileId: profile.id,
-      rawText: 'Alex Rivera — Senior Backend Engineer\n\nSkills\nTypeScript, Node.js, PostgreSQL',
+      rawText:
+        'Alex Rivera — Senior Backend Engineer\n\nSkills\nTypeScript, Node.js, PostgreSQL',
       status: 'Imported',
       sourceNote: 'Seed placeholder; replace with a real CV import.',
       parseSummary: {
@@ -214,10 +254,30 @@ const SEED_JOBS: SeedJob[] = [
     salaryMin: 95000,
     salaryMax: 125000,
     status: 'Active',
-    scores: { tech: 0.9, experience: 0.85, seniority: 0.9, role: 0.95, location: 0.9, domain: 0.7, salary: 0.8 },
+    scores: {
+      tech: 0.9,
+      experience: 0.85,
+      seniority: 0.9,
+      role: 0.95,
+      location: 0.9,
+      domain: 0.7,
+      salary: 0.8,
+    },
     requirements: [
-      { kind: 'Required', category: 'Skill', key: 'typescript', name: 'TypeScript', minYears: 4 },
-      { kind: 'Required', category: 'Skill', key: 'postgresql', name: 'PostgreSQL', minYears: 3 },
+      {
+        kind: 'Required',
+        category: 'Skill',
+        key: 'typescript',
+        name: 'TypeScript',
+        minYears: 4,
+      },
+      {
+        kind: 'Required',
+        category: 'Skill',
+        key: 'postgresql',
+        name: 'PostgreSQL',
+        minYears: 3,
+      },
       { kind: 'Required', category: 'Experience', key: 'backend', name: 'Backend engineering' },
       { kind: 'Preferred', category: 'Skill', key: 'redis', name: 'Redis' },
       { kind: 'Preferred', category: 'Skill', key: 'kubernetes', name: 'Kubernetes' },
@@ -233,10 +293,24 @@ const SEED_JOBS: SeedJob[] = [
     salaryMin: 110000,
     salaryMax: 140000,
     status: 'Active',
-    scores: { tech: 0.8, experience: 0.8, seniority: 0.75, role: 0.8, location: 0.7, domain: 0.65, salary: 0.75 },
+    scores: {
+      tech: 0.8,
+      experience: 0.8,
+      seniority: 0.75,
+      role: 0.8,
+      location: 0.7,
+      domain: 0.65,
+      salary: 0.75,
+    },
     requirements: [
       { kind: 'Required', category: 'Skill', key: 'typescript', name: 'TypeScript' },
-      { kind: 'Required', category: 'Experience', key: 'backend', name: 'Backend engineering', minYears: 7 },
+      {
+        kind: 'Required',
+        category: 'Experience',
+        key: 'backend',
+        name: 'Backend engineering',
+        minYears: 7,
+      },
       { kind: 'Preferred', category: 'Skill', key: 'kubernetes', name: 'Kubernetes' },
     ],
     application: 'in-progress',
@@ -250,10 +324,23 @@ const SEED_JOBS: SeedJob[] = [
     salaryMin: 80000,
     salaryMax: 105000,
     status: 'Active',
-    scores: { tech: 0.75, experience: 0.7, seniority: 0.6, role: 0.65, location: 0.9, domain: 0.6, salary: 0.85 },
+    scores: {
+      tech: 0.75,
+      experience: 0.7,
+      seniority: 0.6,
+      role: 0.65,
+      location: 0.9,
+      domain: 0.6,
+      salary: 0.85,
+    },
     requirements: [
       { kind: 'Required', category: 'Skill', key: 'kubernetes', name: 'Kubernetes' },
-      { kind: 'Required', category: 'Experience', key: 'platform', name: 'Platform engineering' },
+      {
+        kind: 'Required',
+        category: 'Experience',
+        key: 'platform',
+        name: 'Platform engineering',
+      },
       { kind: 'Preferred', category: 'Skill', key: 'redis', name: 'Redis' },
     ],
   },
@@ -266,7 +353,15 @@ const SEED_JOBS: SeedJob[] = [
     salaryMin: 75000,
     salaryMax: 95000,
     status: 'Active',
-    scores: { tech: 0.7, experience: 0.6, seniority: 0.5, role: 0.6, location: 0.9, domain: 0.55, salary: 0.9 },
+    scores: {
+      tech: 0.7,
+      experience: 0.6,
+      seniority: 0.5,
+      role: 0.6,
+      location: 0.9,
+      domain: 0.55,
+      salary: 0.9,
+    },
     requirements: [
       { kind: 'Required', category: 'Skill', key: 'kubernetes', name: 'Kubernetes' },
       { kind: 'Preferred', category: 'Skill', key: 'postgresql', name: 'PostgreSQL' },
@@ -282,10 +377,16 @@ const SEED_JOBS: SeedJob[] = [
     salaryMin: null,
     salaryMax: null,
     status: 'Closed',
-    scores: { tech: 0.65, experience: 0.6, seniority: 0.5, role: 0.7, location: 0.7, domain: 0.5, salary: 0.5 },
-    requirements: [
-      { kind: 'Required', category: 'Skill', key: 'node.js', name: 'Node.js' },
-    ],
+    scores: {
+      tech: 0.65,
+      experience: 0.6,
+      seniority: 0.5,
+      role: 0.7,
+      location: 0.7,
+      domain: 0.5,
+      salary: 0.5,
+    },
+    requirements: [{ kind: 'Required', category: 'Skill', key: 'node.js', name: 'Node.js' }],
   },
 ];
 
@@ -294,10 +395,12 @@ async function seedDomain(): Promise<{ jobsSeeded: boolean }> {
   const profile = await prisma.candidateProfile.findFirst({ orderBy: { createdAt: 'asc' } });
   if (!profile) return { jobsSeeded: false };
 
-  const now = new Date('2026-08-05T08:00:00Z');
+  const now = new Date();
+  const DAY = 86_400_000;
+  const daysAgo = (n: number): Date => new Date(now.valueOf() - n * DAY);
 
   const jobIds: Record<string, string> = {};
-  for (const seedJob of SEED_JOBS) {
+  for (const [index, seedJob] of SEED_JOBS.entries()) {
     const job = await prisma.job.create({
       data: {
         sourceName: 'fixture',
@@ -313,7 +416,7 @@ async function seedDomain(): Promise<{ jobsSeeded: boolean }> {
         salaryMin: seedJob.salaryMin,
         salaryMax: seedJob.salaryMax,
         salaryCurrency: 'EUR',
-        postedAt: new Date('2026-07-20T00:00:00Z'),
+        postedAt: daysAgo(index * 2 + 4),
         status: seedJob.status,
       },
     });
@@ -349,7 +452,12 @@ async function seedDomain(): Promise<{ jobsSeeded: boolean }> {
         weight: dim.weight,
         score: seedJob.scores[dim.key] ?? 0.5,
         applicable: true,
-        status: (seedJob.scores[dim.key] ?? 0.5) >= 0.8 ? 'matched' : (seedJob.scores[dim.key] ?? 0.5) >= 0.5 ? 'partial' : 'missing',
+        status:
+          (seedJob.scores[dim.key] ?? 0.5) >= 0.8
+            ? 'matched'
+            : (seedJob.scores[dim.key] ?? 0.5) >= 0.5
+              ? 'partial'
+              : 'missing',
         detail: DIMENSION_DETAILS[dim.key] ?? null,
       })),
     });
@@ -364,8 +472,11 @@ async function seedDomain(): Promise<{ jobsSeeded: boolean }> {
           sourceName: 'fixture',
           url: seedJob.url,
           submissionKey: `seed:${seedJob.company.toLowerCase()}`,
-          submittedAt: seedJob.application === 'verified' ? new Date('2026-08-01T09:30:00Z') : null,
-          verifiedAt: seedJob.application === 'verified' ? new Date('2026-08-01T09:32:00Z') : null,
+          submittedAt: seedJob.application === 'verified' ? daysAgo(2) : null,
+          verifiedAt:
+            seedJob.application === 'verified'
+              ? new Date(daysAgo(2).valueOf() + 2 * 60_000)
+              : null,
           createdAt: now,
           updatedAt: now,
           events: {
@@ -387,8 +498,20 @@ async function seedDomain(): Promise<{ jobsSeeded: boolean }> {
 
   await prisma.sourceHealth.createMany({
     data: [
-      { sourceName: 'fixture', healthy: true, consecutiveFailures: 0, lastCheckedAt: now, lastSuccessAt: now },
-      { sourceName: 'greenhouse', healthy: true, consecutiveFailures: 0, lastCheckedAt: now, lastSuccessAt: now },
+      {
+        sourceName: 'fixture',
+        healthy: true,
+        consecutiveFailures: 0,
+        lastCheckedAt: now,
+        lastSuccessAt: now,
+      },
+      {
+        sourceName: 'greenhouse',
+        healthy: true,
+        consecutiveFailures: 0,
+        lastCheckedAt: now,
+        lastSuccessAt: now,
+      },
     ],
   });
 
@@ -404,7 +527,8 @@ async function seedDomain(): Promise<{ jobsSeeded: boolean }> {
       versions: {
         create: {
           version: 1,
-          content: 'Alex Rivera — Senior Backend Engineer\nTypeScript · Node.js · PostgreSQL · Redis · Kubernetes',
+          content:
+            'Alex Rivera — Senior Backend Engineer\nTypeScript · Node.js · PostgreSQL · Redis · Kubernetes',
           promptId: 'documents.cv',
           promptVersion: 1,
           aiModel: 'mock',
@@ -426,7 +550,8 @@ async function seedDomain(): Promise<{ jobsSeeded: boolean }> {
         versions: {
           create: {
             version: 1,
-            content: 'Alex Rivera — Senior Backend Engineer\nTailored for Senior Backend Engineer at Acme.',
+            content:
+              'Alex Rivera — Senior Backend Engineer\nTailored for Senior Backend Engineer at Acme.',
             promptId: 'documents.cv',
             promptVersion: 1,
             aiModel: 'mock',
@@ -442,10 +567,14 @@ async function seedDomain(): Promise<{ jobsSeeded: boolean }> {
 
 function average(scores: Record<string, number>): number {
   const values = Object.values(scores);
-  return Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 100) / 100;
+  return (
+    Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 100) / 100
+  );
 }
 
-function appStatus(company: string): 'Prepared' | 'InProgress' | 'Submitted' | 'Verified' | 'Failed' | 'Cancelled' | 'Rejected' {
+function appStatus(
+  company: string,
+): 'Prepared' | 'InProgress' | 'Submitted' | 'Verified' | 'Failed' | 'Cancelled' | 'Rejected' {
   switch (company) {
     case 'Acme':
       return 'Verified';
@@ -461,32 +590,82 @@ function appStatus(company: string): 'Prepared' | 'InProgress' | 'Submitted' | '
 function appEvents(
   kind: 'verified' | 'in-progress' | 'failed',
   now: Date,
-): Array<{ type: string; stage: string | null; at: Date; payload?: Record<string, string | number | boolean | string[] | null> }> {
-  const base: Array<{ type: string; stage: string | null; at: Date; payload?: Record<string, string | number | boolean | string[] | null> }> = [
+): Array<{
+  type: string;
+  stage: string | null;
+  at: Date;
+  payload?: Record<string, string | number | boolean | string[] | null>;
+}> {
+  const base: Array<{
+    type: string;
+    stage: string | null;
+    at: Date;
+    payload?: Record<string, string | number | boolean | string[] | null>;
+  }> = [
     { type: 'application.preparing', stage: 'idle', at: now },
     { type: 'session.opened', stage: 'opening', at: add(now, 1000), payload: { seed: true } },
     { type: 'form.mapped', stage: 'mapping', at: add(now, 2000), payload: { count: 6 } },
-    { type: 'form.filled', stage: 'filling', at: add(now, 3000), payload: { filled: 6, unresolved: 0 } },
+    {
+      type: 'form.filled',
+      stage: 'filling',
+      at: add(now, 3000),
+      payload: { filled: 6, unresolved: 0 },
+    },
   ];
   switch (kind) {
     case 'verified':
       return [
         ...base,
-        { type: 'application.in_progress', stage: 'filling', at: add(now, 4000), payload: { from: 'Prepared' } },
-        { type: 'application.submitted', stage: 'submitted', at: add(now, 8000), payload: { from: 'InProgress' } },
-        { type: 'application.verified', stage: 'submitted', at: add(now, 9000), payload: { from: 'Submitted' } },
+        {
+          type: 'application.in_progress',
+          stage: 'filling',
+          at: add(now, 4000),
+          payload: { from: 'Prepared' },
+        },
+        {
+          type: 'application.submitted',
+          stage: 'submitted',
+          at: add(now, 8000),
+          payload: { from: 'InProgress' },
+        },
+        {
+          type: 'application.verified',
+          stage: 'submitted',
+          at: add(now, 9000),
+          payload: { from: 'Submitted' },
+        },
       ];
     case 'in-progress':
       return [
         ...base,
-        { type: 'application.in_progress', stage: 'filling', at: add(now, 4000), payload: { from: 'Prepared' } },
+        {
+          type: 'application.in_progress',
+          stage: 'filling',
+          at: add(now, 4000),
+          payload: { from: 'Prepared' },
+        },
       ];
     case 'failed':
       return [
         ...base,
-        { type: 'gate.detected', stage: 'waiting-approval', at: add(now, 4000), payload: { count: 1, kinds: ['captcha'] } },
-        { type: 'submission.blocked', stage: 'waiting-approval', at: add(now, 4500), payload: { reason: 'security gate', kinds: ['captcha'] } },
-        { type: 'application.failed', stage: 'waiting-approval', at: add(now, 5000), payload: { from: 'InProgress' } },
+        {
+          type: 'gate.detected',
+          stage: 'waiting-approval',
+          at: add(now, 4000),
+          payload: { count: 1, kinds: ['captcha'] },
+        },
+        {
+          type: 'submission.blocked',
+          stage: 'waiting-approval',
+          at: add(now, 4500),
+          payload: { reason: 'security gate', kinds: ['captcha'] },
+        },
+        {
+          type: 'application.failed',
+          stage: 'waiting-approval',
+          at: add(now, 5000),
+          payload: { from: 'InProgress' },
+        },
       ];
   }
 }
@@ -503,12 +682,22 @@ async function main(): Promise<void> {
     data: {
       action: 'seed.run',
       entityType: 'system',
-      metadata: { candidateSeeded: seeded, jobsSeeded, note: 'development seed (fictional data only)' },
+      metadata: {
+        candidateSeeded: seeded,
+        jobsSeeded,
+        note: 'development seed (fictional data only)',
+      },
     },
   });
 
-  console.log(seeded ? 'Seeded fictional candidate Alex Rivera.' : 'Candidate already seeded; skipped.');
-  console.log(jobsSeeded ? 'Seeded fictional jobs, matches, materials and applications.' : 'Jobs domain already seeded; skipped.');
+  console.log(
+    seeded ? 'Seeded fictional candidate Alex Rivera.' : 'Candidate already seeded; skipped.',
+  );
+  console.log(
+    jobsSeeded
+      ? 'Seeded fictional jobs, matches, materials and applications.'
+      : 'Jobs domain already seeded; skipped.',
+  );
 }
 
 main()
