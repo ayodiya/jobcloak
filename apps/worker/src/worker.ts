@@ -1,7 +1,9 @@
 import { Worker, type Job, type Processor } from 'bullmq';
 import type { Env } from '@jobs-app/config';
 import type { Logger } from '@jobs-app/shared';
+import type { WorkerActivityEvent } from '@jobs-app/shared';
 import { isQueueName, queueConnectionOptions, type QueueName } from './queues.js';
+import { toActivityEvent, type ActivityJobLike } from './activity.js';
 
 export interface WorkerRegistration<T> {
   queue: QueueName;
@@ -13,6 +15,12 @@ export interface StartWorkersOptions {
   logger: Logger;
   /** The queues this process will process. Empty set = process all known queues. */
   queues?: QueueName[];
+  /**
+   * Fire-and-forget publisher for background-job lifecycle events. When
+   * provided, every completed/skipped/failed job is emitted so external
+   * consumers (the API's realtime activity feed) can surface them.
+   */
+  publish?: (event: WorkerActivityEvent) => Promise<void>;
 }
 
 /**
@@ -27,7 +35,9 @@ export async function startWorkers(
   fns: Array<WorkerRegistration<unknown>>,
 ): Promise<Worker[]> {
   const { config, logger } = options;
-  const enabled = new Set<QueueName>(options.queues ?? (fns.map((fn) => fn.queue) as QueueName[]));
+  const enabled = new Set<QueueName>(
+    options.queues ?? (fns.map((fn) => fn.queue) as QueueName[]),
+  );
 
   const workers: Worker[] = [];
   try {
@@ -37,15 +47,17 @@ export async function startWorkers(
         connection: queueConnectionOptions(config),
         concurrency: 4,
       });
-      worker.on('completed', (job: Job) =>
-        logger.info({ queue: fn.queue, jobId: job.id }, 'job completed'),
-      );
-      worker.on('failed', (job: Job | undefined, error: Error) =>
+      worker.on('completed', (job: Job) => {
+        logger.info({ queue: fn.queue, jobId: job.id }, 'job completed');
+        emitActivity(options, logger, fn.queue, job, 'completed');
+      });
+      worker.on('failed', (job: Job | undefined, error: Error) => {
         logger.error(
           { queue: fn.queue, jobId: job?.id, error: { message: error.message } },
           'job failed',
-        ),
-      );
+        );
+        if (job) emitActivity(options, logger, fn.queue, job, 'failed', error.message);
+      });
       worker.on('error', (error: Error) =>
         logger.error({ queue: fn.queue, error: { message: error.message } }, 'worker error'),
       );
@@ -62,6 +74,30 @@ export async function startWorkers(
 
 export async function stopWorkers(workers: Worker[]): Promise<void> {
   await Promise.allSettled(workers.map((worker) => worker.close()));
+}
+
+/**
+ * Emit a worker-activity event for a finished job without blocking the
+ * BullMQ lifecycle: publish failures are logged, never thrown.
+ */
+function emitActivity(
+  options: StartWorkersOptions,
+  logger: Logger,
+  queue: QueueName,
+  job: ActivityJobLike,
+  outcome: 'completed' | 'failed',
+  errorMessage = '',
+): void {
+  if (!options.publish) return;
+  const event = toActivityEvent(queue, job, outcome, new Date());
+  if (outcome === 'failed' && errorMessage && event.error === null) {
+    event.error = errorMessage;
+  }
+  void options
+    .publish(event)
+    .catch((error: unknown) =>
+      logger.warn({ queue, jobId: job.id, error: String(error) }, 'activity publish failed'),
+    );
 }
 
 /**

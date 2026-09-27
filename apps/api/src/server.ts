@@ -15,6 +15,8 @@ import { registerSourcesRoutes } from './routes/sources.js';
 import { registerAutomationRoutes } from './routes/automation.js';
 import { registerSettingsRoutes } from './routes/settings.js';
 import { registerAuditRoutes } from './routes/audit.js';
+import { registerActivityRoutes } from './routes/activity.js';
+import { createActivityHub, type ActivityHub } from './activity.js';
 import type { RouteContext } from './routes/context.js';
 
 export interface AppDeps {
@@ -30,6 +32,11 @@ export interface AppDeps {
    * @jobs-app/database singleton, resolved lazily on first use.
    */
   db?: PrismaClient;
+  /**
+   * Injectable realtime activity hub. Defaults to a Redis-backed hub that
+   * subscribes lazily on the first /activity request; tests inject fakes.
+   */
+  activityHub?: ActivityHub;
 }
 
 export function buildApp(deps: AppDeps): FastifyInstance {
@@ -58,9 +65,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   // CORS for the local dashboard. Production deployments lock the origin from
   // WEB_ORIGIN; development/dev-tooling origins are tolerated for convenience.
   void app.register(cors, {
-    ...(config.NODE_ENV === 'production'
-      ? { origin: config.WEB_ORIGIN }
-      : { origin: true }),
+    ...(config.NODE_ENV === 'production' ? { origin: config.WEB_ORIGIN } : { origin: true }),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Correlation-Id'],
   });
@@ -86,6 +91,15 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   void registerAutomationRoutes(app, context);
   void registerSettingsRoutes(app, context);
   void registerAuditRoutes(app, context);
+
+  // Realtime background-job feed. The default hub subscribes to the worker's
+  // pub/sub channel lazily (on the first /activity request), so tests and
+  // health-only processes never open a redis connection.
+  const hub = deps.activityHub ?? createActivityHub(() => new Redis(config.REDIS_URL));
+  void registerActivityRoutes(app, context, hub);
+  app.addHook('onClose', async () => {
+    await hub.stop();
+  });
 
   return app;
 }

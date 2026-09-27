@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch, type DashboardResponse } from '../../lib/api';
+import ActivityFeed from '../../components/activity-feed';
 import {
   EmptyState,
   ErrorState,
@@ -35,6 +36,9 @@ export default function DashboardPage() {
   const query = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => apiFetch<DashboardResponse>('/dashboard'),
+    // Background jobs update the KPIs (counts, queues) continuously; a short
+    // polling interval keeps the dashboard in sync with what the feed shows.
+    refetchInterval: 10_000,
   });
 
   if (query.isError) {
@@ -178,6 +182,10 @@ export default function DashboardPage() {
           <StackContent data={data} statuses={statuses} statusTotal={statusTotal} />
         </Grid>
       </Grid>
+
+      <Box sx={{ mt: 3 }}>
+        <ActivityFeed />
+      </Box>
     </>
   );
 }

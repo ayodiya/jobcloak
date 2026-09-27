@@ -218,6 +218,26 @@ export interface AuditItem {
   createdAt: string;
 }
 
+export type WorkerActivityOutcome = 'completed' | 'skipped' | 'failed';
+
+export interface WorkerActivityEvent {
+  id: string;
+  queue: string;
+  jobId: string;
+  jobName: string;
+  outcome: WorkerActivityOutcome;
+  at: string;
+  durationMs: number | null;
+  error: string | null;
+  detail: string | null;
+}
+
+export interface ActivityResponse {
+  items: WorkerActivityEvent[];
+  total: number;
+  hasMore: boolean;
+}
+
 export interface SettingsResponse {
   mode: string;
   generatedAt: string;
