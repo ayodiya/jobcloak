@@ -47,7 +47,9 @@ function stubRepository(overrides: Partial<JobRepository> = {}) {
 }
 
 beforeEach(() => {
-  registerJobSource(SERVICE_NAME, () => createFixtureJobSource({ name: SERVICE_NAME, jobs: JOBS }));
+  registerJobSource(SERVICE_NAME, () =>
+    createFixtureJobSource({ name: SERVICE_NAME, jobs: JOBS }),
+  );
 });
 
 describe('JobService.discover', () => {
@@ -72,7 +74,10 @@ describe('JobService.discover', () => {
 
   it('counts re-discovered listings as updated, not duplicated', async () => {
     const repo = stubRepository({
-      upsertJob: vi.fn(async (): Promise<UpsertResult> => ({ job: { id: 'job-1' } as UpsertResult['job'], created: false })),
+      upsertJob: vi.fn(async (): Promise<UpsertResult> => ({
+        job: { id: 'job-1' } as UpsertResult['job'],
+        created: false,
+      })),
     });
     const service = new JobService({ repository: repo });
 
@@ -87,7 +92,10 @@ describe('JobService.discover', () => {
     registerJobSource(SERVICE_NAME, () =>
       createFixtureJobSource({
         name: SERVICE_NAME,
-        jobs: [...JOBS, { sourceName: SERVICE_NAME, url: 'https://svc.example/jobs/3', company: 'X' }],
+        jobs: [
+          ...JOBS,
+          { sourceName: SERVICE_NAME, url: 'https://svc.example/jobs/3', company: 'X' },
+        ],
       }),
     );
 
@@ -95,6 +103,23 @@ describe('JobService.discover', () => {
     expect(summary.fetched).toBe(3);
     expect(summary.rejected).toBe(1);
     expect(summary.healthy).toBe(true);
+  });
+
+  it('drops listings that do not relevance-match the target keywords', async () => {
+    const repo = stubRepository();
+    const service = new JobService({ repository: repo });
+
+    const summary = await service.discover({
+      sourceName: SERVICE_NAME,
+      keywords: ['Senior Backend Engineer'],
+    });
+
+    expect(summary.fetched).toBe(2);
+    expect(summary.filtered).toBe(1);
+    expect(summary.created).toBe(1);
+    expect(repo.upsertJob).toHaveBeenCalledTimes(1);
+    const kept = vi.mocked(repo.upsertJob).mock.calls[0]?.[0] as unknown as { title: string };
+    expect(kept.title).toBe('Backend Engineer');
   });
 
   it('records unhealthy and reports instead of throwing when a source fails', async () => {
@@ -116,7 +141,11 @@ describe('JobService.discover', () => {
     expect(summary.healthy).toBe(false);
     expect(summary.error).toContain('quota');
     expect(repo.recordSourceHealth).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceName: SERVICE_NAME, healthy: false, error: 'ran out of quota' }),
+      expect.objectContaining({
+        sourceName: SERVICE_NAME,
+        healthy: false,
+        error: 'ran out of quota',
+      }),
       expect.any(Date),
     );
   });

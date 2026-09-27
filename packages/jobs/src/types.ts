@@ -37,12 +37,7 @@ export interface JobSearchParams {
 
 export type RequirementKind = 'Required' | 'Preferred' | 'NiceToHave';
 export type RequirementCategory =
-  | 'Skill'
-  | 'Experience'
-  | 'Education'
-  | 'Certification'
-  | 'Language'
-  | 'Other';
+  'Skill' | 'Experience' | 'Education' | 'Certification' | 'Language' | 'Other';
 export type RequirementSource = 'Deterministic' | 'AI';
 
 export interface JobRequirementInput {
@@ -79,6 +74,8 @@ export interface SourceHealthResult {
 export interface DiscoverySummary {
   sourceName: string;
   fetched: number;
+  /** Listings dropped because they did not relevance-match the target keywords. */
+  filtered?: number;
   rejected: number;
   created: number;
   updated: number;

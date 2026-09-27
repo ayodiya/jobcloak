@@ -11,7 +11,7 @@ import { limitKey, utcDate, type LimitStore } from '../src/limits.js';
 import {
   createJobDiscoveryProcessor,
   createLimitGuardedProcessor,
-  createLogOnlyProcessor,
+  createMatchingProcessor,
   createNotificationsProcessor,
   type ProcessorDeps,
 } from '../src/processors.js';
@@ -22,6 +22,7 @@ const config = parseEnv({
   APPLICATION_PREPARATION_DAILY_LIMIT: '1',
   APPLICATION_DAILY_LIMIT: '1',
   JOB_DISCOVERY_SOURCES: 'remoteok,wantedly',
+  JOB_DISCOVERY_KEYWORDS: 'Senior Backend Engineer, Full Stack Developer',
 });
 
 function fakeStore(initial: Record<string, string> = {}): LimitStore {
@@ -72,6 +73,7 @@ function makeDeps(overrides: Partial<ProcessorDeps> & { sink?: NotificationMessa
     store: overrides.store ?? fakeStore(),
     queues: overrides.queues ?? new Map<QueueName, Queue>(),
     ...(overrides.discover !== undefined ? { discover: overrides.discover } : {}),
+    ...(overrides.matchAll !== undefined ? { matchAll: overrides.matchAll } : {}),
   };
   return { deps, sink, logger, registry };
 }
@@ -128,12 +130,13 @@ describe('createLimitGuardedProcessor', () => {
 });
 
 describe('createJobDiscoveryProcessor', () => {
-  it('crawls each configured source when the limit gate passes', async () => {
+  it('crawls each configured source with the target keywords when the limit gate passes', async () => {
     const discover = vi.fn(async (sourceName: string): Promise<DiscoverySummary> => ({
       sourceName,
       fetched: 2,
+      filtered: 1,
       rejected: 0,
-      created: 2,
+      created: 1,
       updated: 0,
       requirementCount: 3,
       healthy: true,
@@ -144,10 +147,13 @@ describe('createJobDiscoveryProcessor', () => {
     const result = await processor(makeJob());
 
     expect(discover).toHaveBeenCalledTimes(2);
-    expect(discover).toHaveBeenCalledWith('remoteok');
-    expect(discover).toHaveBeenCalledWith('wantedly');
+    expect(discover).toHaveBeenCalledWith('remoteok', [
+      'Senior Backend Engineer',
+      'Full Stack Developer',
+    ]);
+    expect(discover).toHaveBeenCalledWith('wantedly', expect.any(Array));
     expect(result).toMatchObject({ skipped: false, kind: 'jobDiscovery' });
-    expect(result.work).toMatchObject({ requested: 2, discovered: 2, failed: 0, created: 4 });
+    expect(result.work).toMatchObject({ requested: 2, discovered: 2, failed: 0, created: 2 });
   });
 
   it('collects crashed sources without failing the run', async () => {
@@ -192,7 +198,7 @@ describe('createJobDiscoveryProcessor', () => {
     await processor(makeJob({ data: { sources: ['japan-dev'] } }));
 
     expect(discover).toHaveBeenCalledTimes(1);
-    expect(discover).toHaveBeenCalledWith('japan-dev');
+    expect(discover).toHaveBeenCalledWith('japan-dev', expect.any(Array));
   });
 
   it('acknowledges when no JobService is wired', async () => {
@@ -287,17 +293,48 @@ describe('createNotificationsProcessor', () => {
   });
 });
 
-describe('createLogOnlyProcessor', () => {
-  it('acknowledges jobs without a domain handler', async () => {
+describe('createMatchingProcessor', () => {
+  it('re-matches every job when no source is requested and reports failures', async () => {
     const logger = makeLogger();
-    const { deps } = makeDeps({ logger: logger as never });
-    const processor = createLogOnlyProcessor('aiMatching', deps);
+    const matchAll = vi.fn(async () => ({
+      matchedAt: 12,
+      failed: [{ jobId: 'j-9', code: 'INTERNAL', message: 'Unexpected error' }],
+    }));
+    const { deps } = makeDeps({ logger: logger as never, matchAll: matchAll as never });
+    const processor = createMatchingProcessor(deps);
 
     const result = await processor(makeJob({ name: 'scheduled-matching' }));
 
-    expect(result).toEqual({ acknowledged: true });
+    expect(matchAll).toHaveBeenCalledWith({});
+    expect(result).toMatchObject({ matchedAt: 12, attempted: 13, failed: 1 });
+    expect(result.failures).toEqual([
+      { jobId: 'j-9', code: 'INTERNAL', message: 'Unexpected error' },
+    ]);
     expect(logger.info).toHaveBeenCalledWith(
-      expect.objectContaining({ label: 'aiMatching', jobId: 'job-1' }),
+      expect.objectContaining({ jobId: 'job-1' }),
+      expect.any(String),
+    );
+  });
+
+  it('narrows matching to one source from job data', async () => {
+    const matchAll = vi.fn(async () => ({ matchedAt: 0, failed: [] }));
+    const { deps } = makeDeps({ matchAll: matchAll as never });
+    const processor = createMatchingProcessor(deps);
+
+    await processor(makeJob({ name: 'scheduled-matching', data: { source: 'remoteok' } }));
+
+    expect(matchAll).toHaveBeenCalledWith({ sourceName: 'remoteok' });
+  });
+
+  it('acknowledges when no MatchService is wired', async () => {
+    const { deps, logger } = makeDeps();
+    const processor = createMatchingProcessor(deps);
+
+    const result = await processor(makeJob({ name: 'scheduled-matching' }));
+
+    expect(result).toEqual({ wired: false });
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'job-1' }),
       expect.any(String),
     );
   });

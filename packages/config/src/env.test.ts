@@ -144,6 +144,7 @@ describe('envSchema shape', () => {
       'APPLICATION_DAILY_LIMIT',
       'JOB_DISCOVERY_DAILY_LIMIT',
       'JOB_DISCOVERY_SOURCES',
+      'JOB_DISCOVERY_KEYWORDS',
       'APPLICATION_PREPARATION_DAILY_LIMIT',
       'API_HOST',
       'API_PORT',

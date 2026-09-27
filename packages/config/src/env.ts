@@ -52,6 +52,21 @@ export const envSchema = z.object({
       'remoteok,remotive,jobicy,arbeitnow,myjobmag,jobzilla,wantedly,japan-dev,berlinstartupjobs',
     ),
 
+  /**
+   * Comma-separated target-role keywords. Discovery keeps only listings whose
+   * title is relevant to one of these (see sources/filter.ts matchesAnyKeyword).
+   */
+  JOB_DISCOVERY_KEYWORDS: z
+    .string()
+    .default(
+      'Senior Full Stack Engineer, Senior Full-Stack Developer, Senior Software Engineer, ' +
+        'Full Stack Software Engineer, Full Stack Developer, Senior Backend Engineer, ' +
+        'Backend Software Engineer, Node.js Backend Engineer, Node.js Developer, ' +
+        'TypeScript Developer, Senior JavaScript Engineer, React Developer, Next.js Developer, ' +
+        'Software Engineer – Node.js, Software Engineer – TypeScript, Technical Lead, ' +
+        'Software Engineering Lead, Tech Lead, Full Stack Tech Lead',
+    ),
+
   API_HOST: z.string().default('127.0.0.1'),
   API_PORT: IntPositive.default(3100),
   WEB_PORT: IntPositive.default(3000),

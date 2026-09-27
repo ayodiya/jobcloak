@@ -4,6 +4,7 @@ import { normalizeJob, parseJob } from './normalize.js';
 import { JobRepository } from './repository.js';
 import { extractRequirements } from './requirements.js';
 import { extractRequirementsWithAI } from './requirements-ai.js';
+import { filterByKeywords } from './sources/filter.js';
 import { createJobSource } from './sources/registry.js';
 import type {
   DiscoverySummary,
@@ -33,6 +34,11 @@ export interface DiscoverOptions {
   sourceOptions?: unknown;
   /** Request AI-assisted requirement extraction for this run. */
   useAI?: boolean;
+  /**
+   * Target-role keywords. When provided, listings whose title is not relevant
+   * to one of the keywords are dropped before normalization (see filter.ts).
+   */
+  keywords?: string[];
 }
 
 /**
@@ -70,7 +76,10 @@ export class JobService {
       const { jobs, rejected } = this.toNormalized(found);
       summary.rejected = rejected;
 
-      for (const job of jobs) {
+      const kept = options.keywords ? filterByKeywords(jobs, options.keywords) : jobs;
+      if (kept.length !== jobs.length) summary.filtered = jobs.length - kept.length;
+
+      for (const job of kept) {
         const { job: row, created } = await this.repository.upsertJob(job, this.now());
         if (created) summary.created += 1;
         else summary.updated += 1;
@@ -80,7 +89,10 @@ export class JobService {
         summary.requirementCount += requirements.length;
       }
 
-      await this.repository.recordSourceHealth({ sourceName: options.sourceName, healthy: true }, this.now());
+      await this.repository.recordSourceHealth(
+        { sourceName: options.sourceName, healthy: true },
+        this.now(),
+      );
       return summary;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -93,7 +105,10 @@ export class JobService {
   }
 
   /** Fetch and persist a single listing by URL. */
-  async getJob(sourceName: string, url: string): Promise<{ job: JobRow; requirements: RequirementRow[] }> {
+  async getJob(
+    sourceName: string,
+    url: string,
+  ): Promise<{ job: JobRow; requirements: RequirementRow[] }> {
     const source = createJobSource(sourceName);
     const raw = await source.getJob(url);
     const job = this.normalizeOne(raw);

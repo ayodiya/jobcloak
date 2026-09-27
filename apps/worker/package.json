@@ -12,6 +12,7 @@
     "@jobs-app/config": "*",
     "@jobs-app/database": "*",
     "@jobs-app/jobs": "*",
+    "@jobs-app/matching": "*",
     "@jobs-app/notifications": "*",
     "@jobs-app/shared": "*",
     "bullmq": "^6.3.8",

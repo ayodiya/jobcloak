@@ -3,6 +3,7 @@ import type { Queue } from 'bullmq';
 import { prisma } from '@jobs-app/database';
 import { loadConfig, loadEnvFileIfExists } from '@jobs-app/config';
 import { JobService } from '@jobs-app/jobs';
+import { MatchingService } from '@jobs-app/matching';
 import {
   createConsoleChannel,
   createFileChannel,
@@ -14,7 +15,7 @@ import { redisLimitStore } from './limits.js';
 import {
   createJobDiscoveryProcessor,
   createLimitGuardedProcessor,
-  createLogOnlyProcessor,
+  createMatchingProcessor,
   createNotificationsProcessor,
   type ProcessorDeps,
 } from './processors.js';
@@ -41,15 +42,23 @@ const queues = new Map<QueueName, Queue>(
 );
 
 // Discovery persists listings and source health into Postgres. Injected as
-// `discover` so processor deps stay decoupled from the jobs package.
+// `discover` so processor deps stay decoupled from the jobs package. Matching
+// is deterministic scoring against the candidate profile; injected as
+// `matchAll` for the scheduled aiMatching processor.
 const jobService = new JobService();
+const matchingService = new MatchingService();
 const deps: ProcessorDeps = {
   config,
   logger,
   registry,
   store,
   queues,
-  discover: (sourceName) => jobService.discover({ sourceName }),
+  discover: (sourceName, keywords) =>
+    jobService.discover({
+      sourceName,
+      ...(keywords && keywords.length > 0 ? { keywords } : {}),
+    }),
+  matchAll: (filter) => matchingService.matchAll(filter),
 };
 
 // Dedicated publish client for the realtime activity feed. Subscribers
@@ -96,7 +105,7 @@ const registrations = [
     createLimitGuardedProcessor('applicationPreparation', deps),
   ),
   registerProcessor('browserAutomation', createLimitGuardedProcessor('application', deps)),
-  registerProcessor('aiMatching', createLogOnlyProcessor('aiMatching', deps)),
+  registerProcessor('aiMatching', createMatchingProcessor(deps)),
 ];
 
 // Schedulers live in Redis on their own; upserting every boot keeps them in

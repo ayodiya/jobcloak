@@ -33,9 +33,19 @@ export interface ProcessorDeps {
   /**
    * Discovery callback used by the `jobDiscovery` processor. Injected by the
    * worker entrypoint and backed by `JobService.discover`, which already
-   * records source health (and never throws) internally.
+   * records source health (and never throws) internally. The processor passes
+   * the configured target-role keywords so only relevant listings persist.
    */
-  discover?: (sourceName: string) => Promise<DiscoverySummary>;
+  discover?: (sourceName: string, keywords?: string[]) => Promise<DiscoverySummary>;
+  /**
+   * Full re-match callback used by the `aiMatching` processor. Injected by the
+   * worker entrypoint and backed by `MatchingService.matchAll`, which pages
+   * internally, never throws, and summarizes per-job failures.
+   */
+  matchAll?: (filter?: { sourceName?: string }) => Promise<{
+    matchedAt: number;
+    failed: Array<{ jobId: string; code: string; message: string }>;
+  }>;
 }
 
 /**
@@ -84,6 +94,7 @@ export interface DiscoveryRunResult {
   source: string;
   healthy: boolean;
   fetched?: number;
+  filtered?: number;
   created?: number;
   updated?: number;
   rejected?: number;
@@ -104,6 +115,13 @@ function configuredSources(deps: ProcessorDeps, data: unknown): string[] {
     .filter(Boolean);
 }
 
+/** Target-role keywords read from config (comma-separated). */
+export function configuredKeywords(deps: ProcessorDeps): string[] {
+  return deps.config.JOB_DISCOVERY_KEYWORDS.split(',')
+    .map((keyword) => keyword.trim())
+    .filter(Boolean);
+}
+
 /**
  * Scheduled job-board discovery: crawl every configured source once per run,
  * persisting new listings and refreshing existing ones via the DB-backed
@@ -120,16 +138,18 @@ export function createJobDiscoveryProcessor(deps: ProcessorDeps): Processor<unkn
       return { wired: false };
     }
     const sources = configuredSources(deps, job.data);
+    const keywords = configuredKeywords(deps);
     deps.logger.info({ jobId: job.id, sources }, 'starting discovery run');
     const results: DiscoveryRunResult[] = [];
     for (const source of sources) {
       try {
-        const summary = await deps.discover(source);
+        const summary = await deps.discover(source, keywords);
         results.push({ source, ...summary });
         deps.logger.info(
           {
             source,
             fetched: summary.fetched,
+            filtered: summary.filtered,
             created: summary.created,
             updated: summary.updated,
             rejected: summary.rejected,
@@ -144,9 +164,18 @@ export function createJobDiscoveryProcessor(deps: ProcessorDeps): Processor<unkn
     }
     const discovered = results.filter((r) => r.healthy).length;
     const failed = results.length - discovered;
+    const filtered = results.reduce((n, r) => n + (r.filtered ?? 0), 0);
     const created = results.reduce((n, r) => n + (r.created ?? 0), 0);
     const updated = results.reduce((n, r) => n + (r.updated ?? 0), 0);
-    return { requested: sources.length, discovered, failed, created, updated, results };
+    return {
+      requested: sources.length,
+      discovered,
+      failed,
+      filtered,
+      created,
+      updated,
+      results,
+    };
   });
 }
 
@@ -216,6 +245,41 @@ export function createNotificationsProcessor(deps: ProcessorDeps): Processor<unk
       const results = await deps.registry.send(message);
       deps.logger.info({ jobId: job.id, name: job.name, results }, 'notification delivered');
       return results;
+    });
+}
+
+/**
+ * Full re-match of every active job against the candidate profile. Runs on
+ * the `aiMatching` queue every 6h so newly discovered jobs get real, scored
+ * matches without a manual step. Scoring is deterministic; on a manual or
+ * scheduled run `data.source` narrows the run to one board.
+ */
+export function createMatchingProcessor(deps: ProcessorDeps): Processor<unknown> {
+  return async (job) =>
+    withCorrelation(async () => {
+      if (!deps.matchAll) {
+        deps.logger.warn(
+          { jobId: job.id, name: job.name },
+          'matching requested but no MatchService is wired; acknowledging',
+        );
+        return { wired: false };
+      }
+      const data = (job.data ?? {}) as Record<string, unknown>;
+      const filter =
+        typeof data.source === 'string' && data.source.length > 0
+          ? { sourceName: data.source }
+          : {};
+      const result = await deps.matchAll(filter);
+      deps.logger.info(
+        { jobId: job.id, matchedAt: result.matchedAt, failed: result.failed.length },
+        'matching run completed',
+      );
+      return {
+        matchedAt: result.matchedAt,
+        attempted: result.matchedAt + result.failed.length,
+        failed: result.failed.length,
+        ...(result.failed.length > 0 ? { failures: result.failed } : {}),
+      };
     });
 }
 
