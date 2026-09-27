@@ -45,6 +45,10 @@ generated/
 documents/output/
 apps/web/public/generated/
 
+# Candidate resumes — personal data, never committed
+ayodeji_software_engineer.pdf
+*.resume.pdf
+
 # Prisma
 prisma/migrations/*/migration_lock.toml!.lock
 

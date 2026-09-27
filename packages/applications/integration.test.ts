@@ -49,11 +49,36 @@ describe('applications (integration)', () => {
     });
     profileId = profile.id;
 
-    jobAcme = (await JOB_REPO.upsertJob(jobData('Acme', 'Senior Backend Engineer', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), new Date('2026-08-01T00:00:00Z'))).job.id;
-    jobGlobex = (await JOB_REPO.upsertJob(jobData('Globex', 'Staff Engineer', 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'), new Date('2026-08-01T00:00:00Z'))).job.id;
-    jobInitech = (await JOB_REPO.upsertJob(jobData('Initech', 'Platform Engineer', 'cccccccccccccccccccccccccccccccccccccccc'), new Date('2026-08-01T00:00:00Z'))).job.id;
-    jobUmbrella = (await JOB_REPO.upsertJob(jobData('Umbrella', 'DevOps Engineer', 'dddddddddddddddddddddddddddddddddddddddd'), new Date('2026-08-01T00:00:00Z'))).job.id;
-    jobVandelay = (await JOB_REPO.upsertJob(jobData('Vandelay', 'Backend Engineer', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'), new Date('2026-08-01T00:00:00Z'))).job.id;
+    jobAcme = (
+      await JOB_REPO.upsertJob(
+        jobData('Acme', 'Senior Backend Engineer', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+        new Date('2026-08-01T00:00:00Z'),
+      )
+    ).job.id;
+    jobGlobex = (
+      await JOB_REPO.upsertJob(
+        jobData('Globex', 'Staff Engineer', 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'),
+        new Date('2026-08-01T00:00:00Z'),
+      )
+    ).job.id;
+    jobInitech = (
+      await JOB_REPO.upsertJob(
+        jobData('Initech', 'Platform Engineer', 'cccccccccccccccccccccccccccccccccccccccc'),
+        new Date('2026-08-01T00:00:00Z'),
+      )
+    ).job.id;
+    jobUmbrella = (
+      await JOB_REPO.upsertJob(
+        jobData('Umbrella', 'DevOps Engineer', 'dddddddddddddddddddddddddddddddddddddddd'),
+        new Date('2026-08-01T00:00:00Z'),
+      )
+    ).job.id;
+    jobVandelay = (
+      await JOB_REPO.upsertJob(
+        jobData('Vandelay', 'Backend Engineer', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'),
+        new Date('2026-08-01T00:00:00Z'),
+      )
+    ).job.id;
   });
 
   afterAll(async () => {
@@ -103,11 +128,99 @@ describe('applications (integration)', () => {
       submissionKey: 'idempotency-key-1',
     });
 
-    const applicationCount = await prisma.application.count({ where: { profileId, jobId: jobAcme } });
+    const applicationCount = await prisma.application.count({
+      where: { profileId, jobId: jobAcme },
+    });
     expect(applicationCount).toBe(1);
 
-    const found = await prisma.application.findUnique({ where: { submissionKey: 'idempotency-key-1' } });
+    const found = await prisma.application.findUnique({
+      where: { submissionKey: 'idempotency-key-1' },
+    });
     expect(found?.id).toBe(application.id);
+  });
+
+  it('prepares Prepared applications from eligible matches in score order, skipping existing', async () => {
+    const service = new ApplicationService();
+
+    const jobHigh = (
+      await JOB_REPO.upsertJob(
+        jobData(
+          'Zephyr',
+          'Senior Backend Engineer',
+          'ffffffffffffffffffffffffffffffffffffffff',
+        ),
+        new Date('2026-08-01T00:00:00Z'),
+      )
+    ).job.id;
+    const jobLow = (
+      await JOB_REPO.upsertJob(
+        jobData('Yonder', 'Staff Engineer', 'eeeeeeeeeeeeeeeeeeeeeegggggggggggggggggg'),
+        new Date('2026-08-01T00:00:00Z'),
+      )
+    ).job.id;
+    const jobExisting = (
+      await JOB_REPO.upsertJob(
+        jobData('Zebra', 'Backend Engineer', 'eeeeeeiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii'),
+        new Date('2026-08-01T00:00:00Z'),
+      )
+    ).job.id;
+
+    await prisma.jobMatch.create({
+      data: {
+        jobId: jobHigh,
+        jobTitle: 'Senior Backend Engineer',
+        company: 'Zephyr',
+        totalScore: 0.9,
+        confidence: 0.8,
+      },
+    });
+    await prisma.jobMatch.create({
+      data: {
+        jobId: jobExisting,
+        jobTitle: 'Backend Engineer',
+        company: 'Zebra',
+        totalScore: 0.85,
+        confidence: 0.8,
+      },
+    });
+    await prisma.jobMatch.create({
+      data: {
+        jobId: jobLow,
+        jobTitle: 'Staff Engineer',
+        company: 'Yonder',
+        totalScore: 0.4,
+        confidence: 0.5,
+      },
+    });
+    await service.createApplication({
+      profileId,
+      jobId: jobExisting,
+      url: 'https://apply.example/jobs/zebra',
+    });
+
+    const result = await service.prepareMatchesForCandidate({ limit: 2 });
+
+    expect(result.prepared).toBe(2);
+    expect(result.createdJobIds).toEqual([jobHigh, jobLow]);
+    expect(result.skippedExisting).toBe(1);
+    expect(result.failed).toEqual([]);
+
+    const prepared = await prisma.application.findMany({
+      where: { jobId: { in: [jobHigh, jobLow] } },
+      include: { events: true },
+    });
+    expect(prepared.map((app) => app.jobId).sort()).toEqual([jobHigh, jobLow].sort());
+    expect(prepared.every((app) => app.status === 'Prepared')).toBe(true);
+    expect(prepared.every((app) => app.mode === 'review')).toBe(true);
+    expect(prepared.flatMap((app) => app.events.map((event) => event.type)).sort()).toEqual([
+      'application.preparing',
+      'application.preparing',
+    ]);
+
+    const rerun = await service.prepareMatchesForCandidate({ limit: 10 });
+    expect(rerun.prepared).toBe(0);
+    expect(rerun.skippedExisting).toBeGreaterThanOrEqual(1);
+    expect(rerun.createdJobIds).toEqual([]);
   });
 
   it('walks the happy path and records timestamps', async () => {
@@ -147,8 +260,12 @@ describe('applications (integration)', () => {
       url: `https://apply.example/jobs/initech`,
     });
 
-    await expect(service.transition(created.id, 'Submitted')).rejects.toBeInstanceOf(ConflictError);
-    await expect(service.transition(created.id, 'Rejected')).rejects.toBeInstanceOf(ConflictError);
+    await expect(service.transition(created.id, 'Submitted')).rejects.toBeInstanceOf(
+      ConflictError,
+    );
+    await expect(service.transition(created.id, 'Rejected')).rejects.toBeInstanceOf(
+      ConflictError,
+    );
     await expect(service.transition(created.id, 'Backwards' as never)).rejects.toBeInstanceOf(
       ValidationError,
     );
@@ -163,11 +280,23 @@ describe('applications (integration)', () => {
     });
     const at = new Date('2026-08-02T10:00:00Z');
 
-    await service.recordEvent(created.id, { type: 'session.opened', stage: 'opening', payload: { url: `https://apply.example/jobs/umbrella` }, at });
-    await service.recordEvent(created.id, { type: 'form.mapped', stage: 'mapping', payload: { count: 7 }, at: new Date('2026-08-02T10:00:01Z') });
+    await service.recordEvent(created.id, {
+      type: 'session.opened',
+      stage: 'opening',
+      payload: { url: `https://apply.example/jobs/umbrella` },
+      at,
+    });
+    await service.recordEvent(created.id, {
+      type: 'form.mapped',
+      stage: 'mapping',
+      payload: { count: 7 },
+      at: new Date('2026-08-02T10:00:01Z'),
+    });
 
     const stored = await service.getApplication(created.id);
-    const trail = stored.events.filter((event) => event.type.startsWith('session.') || event.type.startsWith('form.'));
+    const trail = stored.events.filter(
+      (event) => event.type.startsWith('session.') || event.type.startsWith('form.'),
+    );
     expect(trail.map((event) => event.type)).toEqual(['session.opened', 'form.mapped']);
     expect(trail[0]?.payload).toEqual({ url: `https://apply.example/jobs/umbrella` });
   });
@@ -207,15 +336,29 @@ describe('applications (integration)', () => {
     const sessionEvents: SessionEventInput[] = [
       { type: 'session.opened', at: 1000, stage: 'opening' },
       { type: 'form.mapped', at: 2000, stage: 'mapping', payload: { count: 7 } },
-      { type: 'field.mapped', at: 2100, stage: 'mapping', payload: { key: 'k1', confidence: 'high', required: true } },
-      { type: 'submission.blocked', at: 3000, stage: 'waiting-approval', payload: { reason: 'security gate' } },
+      {
+        type: 'field.mapped',
+        at: 2100,
+        stage: 'mapping',
+        payload: { key: 'k1', confidence: 'high', required: true },
+      },
+      {
+        type: 'submission.blocked',
+        at: 3000,
+        stage: 'waiting-approval',
+        payload: { reason: 'security gate' },
+      },
     ];
 
     for (const event of sessionEvents) await sink.emit(event);
 
     const stored = await service.getApplication(created.id);
     const trail = stored.events.filter(
-      (event) => event.type === 'session.opened' || event.type.startsWith('form.') || event.type.startsWith('field.mapped') || event.type === 'submission.blocked',
+      (event) =>
+        event.type === 'session.opened' ||
+        event.type.startsWith('form.') ||
+        event.type.startsWith('field.mapped') ||
+        event.type === 'submission.blocked',
     );
     expect(trail.map((event) => event.type)).toEqual([
       'session.opened',

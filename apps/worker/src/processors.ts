@@ -1,5 +1,9 @@
 import type { Processor, Queue } from 'bullmq';
 import type { Env } from '@jobs-app/config';
+import type {
+  ApplicationPreparationResult,
+  PrepareApplicationsOptions,
+} from '@jobs-app/applications';
 import type { DiscoverySummary } from '@jobs-app/jobs';
 import {
   buildDailyReport,
@@ -46,6 +50,15 @@ export interface ProcessorDeps {
     matchedAt: number;
     failed: Array<{ jobId: string; code: string; message: string }>;
   }>;
+  /**
+   * Application preparation callback used by the `applicationPreparation`
+   * processor. Injected by the worker entrypoint and backed by
+   * `ApplicationService.prepareMatchesForCandidate`, which walks eligible
+   * matches in score order and creates Prepared applications up to `limit`.
+   */
+  prepareApplications?: (
+    options: PrepareApplicationsOptions,
+  ) => Promise<ApplicationPreparationResult>;
 }
 
 /**
@@ -281,6 +294,43 @@ export function createMatchingProcessor(deps: ProcessorDeps): Processor<unknown>
         ...(result.failed.length > 0 ? { failures: result.failed } : {}),
       };
     });
+}
+
+/**
+ * First stage of the application pipeline: create a Prepared application for
+ * the top eligible, scored matches that do not yet have one. Runs on the
+ * `applicationPreparation` queue; the daily limit (APPLICATION_PREPARATION
+ * _DAILY_LIMIT) doubles as the per-run batch size so at most that many fresh
+ * applications are prepared per day.
+ */
+export function createApplicationPreparationProcessor(deps: ProcessorDeps): Processor<unknown> {
+  return createLimitGuardedProcessor('applicationPreparation', deps, async (job) => {
+    if (!deps.prepareApplications) {
+      deps.logger.warn(
+        { jobId: job.id, name: job.name },
+        'application preparation requested but no ApplicationService is wired; acknowledging',
+      );
+      return { wired: false };
+    }
+    const limit = deps.config.APPLICATION_PREPARATION_DAILY_LIMIT;
+    deps.logger.info({ jobId: job.id, limit }, 'starting application preparation run');
+    const result = await deps.prepareApplications({ limit });
+    deps.logger.info(
+      {
+        jobId: job.id,
+        prepared: result.prepared,
+        skippedExisting: result.skippedExisting,
+        failed: result.failed.length,
+      },
+      'application preparation completed',
+    );
+    return {
+      prepared: result.prepared,
+      skippedExisting: result.skippedExisting,
+      failed: result.failed.length,
+      ...(result.failed.length > 0 ? { failures: result.failed } : {}),
+    };
+  });
 }
 
 /** Placeholder handler for queues whose domain work is not wired into the worker yet. */

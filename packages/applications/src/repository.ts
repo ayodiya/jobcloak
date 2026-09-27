@@ -22,6 +22,14 @@ import { emptyStatusCounts } from './transitions.js';
 
 type Db = PrismaClient;
 
+export interface PreparableMatchRow {
+  jobId: string;
+  title: string;
+  company: string;
+  url: string;
+  sourceName: string | null;
+}
+
 const JOB_SUMMARY_INCLUDE = {
   job: {
     select: {
@@ -78,6 +86,51 @@ export class ApplicationRepository {
     }
   }
 
+  /** Id of the single local candidate profile, or null when none exists. */
+  async findCandidateId(): Promise<string | null> {
+    const profile = await this.db.candidateProfile.findFirst({ select: { id: true } });
+    return profile?.id ?? null;
+  }
+
+  /**
+   * Eligible, active matches ordered by score — the candidate pool the
+   * preparation stage turns into Prepared applications. Includes the matched
+   * job's details so callers can build the application without a second query.
+   */
+  listPreparableMatches(filter: {
+    limit: number;
+    offset: number;
+  }): Promise<PreparableMatchRow[]> {
+    return this.db.jobMatch
+      .findMany({
+        where: { eligible: true, job: { status: 'Active' } },
+        orderBy: [{ totalScore: 'desc' }, { updatedAt: 'desc' }],
+        skip: filter.offset,
+        take: filter.limit,
+        select: {
+          jobId: true,
+          job: {
+            select: { title: true, company: true, url: true, sourceName: true, status: true },
+          },
+        },
+      })
+      .then((rows) =>
+        rows.flatMap((row) => {
+          const job = row.job;
+          if (!job || job.status !== 'Active') return [];
+          return [
+            {
+              jobId: row.jobId,
+              title: job.title,
+              company: job.company,
+              url: job.url,
+              sourceName: job.sourceName,
+            },
+          ];
+        }),
+      );
+  }
+
   listApplications(filter: ApplicationListFilter = {}): Promise<ApplicationListItem[]> {
     return this.db.application.findMany({
       where: toWhere(filter),
@@ -93,7 +146,9 @@ export class ApplicationRepository {
   }
 
   /** Per-status counts for dashboard summaries (zero-filled). */
-  async countByStatus(filter: Pick<ApplicationListFilter, 'sourceName' | 'company'> = {}): Promise<ApplicationStatusCount> {
+  async countByStatus(
+    filter: Pick<ApplicationListFilter, 'sourceName' | 'company'> = {},
+  ): Promise<ApplicationStatusCount> {
     const groups = await this.db.application.groupBy({
       by: ['status'],
       _count: { _all: true },
@@ -108,7 +163,11 @@ export class ApplicationRepository {
     return counts;
   }
 
-  async updateStatus(applicationId: string, status: ApplicationStatus, now: Date = new Date()): Promise<ApplicationRow> {
+  async updateStatus(
+    applicationId: string,
+    status: ApplicationStatus,
+    now: Date = new Date(),
+  ): Promise<ApplicationRow> {
     try {
       return await this.db.application.update({
         where: { id: applicationId },
@@ -124,7 +183,10 @@ export class ApplicationRepository {
   }
 
   /** Attach the idempotency key (no-op when already equal). */
-  async setSubmissionKey(applicationId: string, submissionKey: string): Promise<ApplicationRow> {
+  async setSubmissionKey(
+    applicationId: string,
+    submissionKey: string,
+  ): Promise<ApplicationRow> {
     try {
       return await this.db.application.update({
         where: { id: applicationId },
@@ -135,7 +197,10 @@ export class ApplicationRepository {
     }
   }
 
-  async addEvent(applicationId: string, input: ApplicationEventInput): Promise<ApplicationEventRow> {
+  async addEvent(
+    applicationId: string,
+    input: ApplicationEventInput,
+  ): Promise<ApplicationEventRow> {
     try {
       return await this.db.applicationEvent.create({
         data: {
@@ -152,7 +217,11 @@ export class ApplicationRepository {
   }
 
   /** Mirror a state change into the cross-cutting audit trail. */
-  async audit(action: string, entityId: string, metadata?: Record<string, unknown>): Promise<void> {
+  async audit(
+    action: string,
+    entityId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
     await this.db.auditLog.create({
       data: {
         action,

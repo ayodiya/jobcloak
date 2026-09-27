@@ -9,6 +9,7 @@ import type { Job, Queue } from 'bullmq';
 import { describe, expect, it, vi } from 'vitest';
 import { limitKey, utcDate, type LimitStore } from '../src/limits.js';
 import {
+  createApplicationPreparationProcessor,
   createJobDiscoveryProcessor,
   createLimitGuardedProcessor,
   createMatchingProcessor,
@@ -74,6 +75,9 @@ function makeDeps(overrides: Partial<ProcessorDeps> & { sink?: NotificationMessa
     queues: overrides.queues ?? new Map<QueueName, Queue>(),
     ...(overrides.discover !== undefined ? { discover: overrides.discover } : {}),
     ...(overrides.matchAll !== undefined ? { matchAll: overrides.matchAll } : {}),
+    ...(overrides.prepareApplications !== undefined
+      ? { prepareApplications: overrides.prepareApplications }
+      : {}),
   };
   return { deps, sink, logger, registry };
 }
@@ -290,6 +294,75 @@ describe('createNotificationsProcessor', () => {
       severity: 'warning',
       at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
     });
+  });
+});
+
+describe('createApplicationPreparationProcessor', () => {
+  it('prepares applications up to the configured daily limit and reports failures', async () => {
+    const logger = makeLogger();
+    const prepareApplications = vi.fn(async () => ({
+      prepared: 1,
+      createdJobIds: ['j-1'],
+      skippedExisting: 2,
+      failed: [{ jobId: 'j-9', code: 'NO_URL', message: 'Listing has no application URL' }],
+    }));
+    const { deps } = makeDeps({
+      logger: logger as never,
+      prepareApplications: prepareApplications as never,
+    });
+    const processor = createApplicationPreparationProcessor(deps);
+
+    const result = await processor(makeJob({ name: 'scheduled-preparation' }));
+
+    expect(prepareApplications).toHaveBeenCalledWith({ limit: 1 });
+    expect(result).toMatchObject({
+      skipped: false,
+      kind: 'applicationPreparation',
+      used: 1,
+    });
+    expect(result.work).toMatchObject({ prepared: 1, skippedExisting: 2, failed: 1 });
+    expect(result.work).toMatchObject({
+      failures: [{ jobId: 'j-9', code: 'NO_URL', message: 'Listing has no application URL' }],
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'job-1', prepared: 1 }),
+      expect.any(String),
+    );
+  });
+
+  it('does not run preparation when the daily limit is exhausted', async () => {
+    const logger = makeLogger();
+    const prepareApplications = vi.fn();
+    const consumedKey = limitKey('applicationPreparation', utcDate());
+    const { deps, sink } = makeDeps({
+      logger: logger as never,
+      prepareApplications,
+      store: fakeStore({ [consumedKey]: '1' }),
+    });
+    const processor = createApplicationPreparationProcessor(deps);
+
+    const result = await processor(makeJob({ name: 'scheduled-preparation' }));
+
+    expect(prepareApplications).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ skipped: true, kind: 'applicationPreparation' });
+    expect(sink[0]).toMatchObject({
+      severity: 'warning',
+      title: 'Daily limit reached: applicationPreparation',
+    });
+  });
+
+  it('acknowledges when no ApplicationService is wired', async () => {
+    const { deps, logger } = makeDeps();
+    const processor = createApplicationPreparationProcessor(deps);
+
+    const result = await processor(makeJob({ name: 'scheduled-preparation' }));
+
+    expect(result).toMatchObject({ skipped: false, kind: 'applicationPreparation' });
+    expect(result.work).toEqual({ wired: false });
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'job-1' }),
+      expect.any(String),
+    );
   });
 });
 

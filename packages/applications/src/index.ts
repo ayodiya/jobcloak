@@ -16,19 +16,31 @@
  */
 export { ApplicationRepository } from './repository.js';
 export { ApplicationService } from './service.js';
-export { ApplicationEventSink, type EventSinkInput, type SessionEventInput } from './event-sink.js';
-export { ACTIVE_STATUSES, TERMINAL_STATUSES, canTransition, statusEventType } from './transitions.js';
+export {
+  ApplicationEventSink,
+  type EventSinkInput,
+  type SessionEventInput,
+} from './event-sink.js';
+export {
+  ACTIVE_STATUSES,
+  TERMINAL_STATUSES,
+  canTransition,
+  statusEventType,
+} from './transitions.js';
 export type {
   ApplicationEventInput,
   ApplicationEventRow,
   ApplicationListItem,
   ApplicationListFilter,
   ApplicationMode,
+  ApplicationPreparationResult,
   ApplicationRow,
   ApplicationStatus,
   ApplicationStatusCount,
   ApplicationWithEvents,
   CreateApplicationInput,
+  PreparationFailure,
+  PrepareApplicationsOptions,
 } from './types.js';
 export {
   APPLICATION_MODES,

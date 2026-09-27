@@ -31,6 +31,12 @@ export const SCHEDULERS: readonly SchedulerDefinition[] = [
     template: { name: 'scheduled-matching', data: { source: 'scheduler' } },
   },
   {
+    id: 'preparation-every-6h',
+    queue: 'applicationPreparation',
+    repeat: { every: 6 * HOUR_MS },
+    template: { name: 'scheduled-preparation', data: { source: 'scheduler' } },
+  },
+  {
     id: 'daily-report-18-utc',
     queue: 'notifications',
     repeat: { pattern: '0 18 * * *' },

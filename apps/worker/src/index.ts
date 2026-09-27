@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import type { Queue } from 'bullmq';
+import { ApplicationService } from '@jobs-app/applications';
 import { prisma } from '@jobs-app/database';
 import { loadConfig, loadEnvFileIfExists } from '@jobs-app/config';
 import { JobService } from '@jobs-app/jobs';
@@ -13,6 +14,7 @@ import { ACTIVITY_CHANNEL, createLogger, type WorkerActivityEvent } from '@jobs-
 import { Redis } from 'ioredis';
 import { redisLimitStore } from './limits.js';
 import {
+  createApplicationPreparationProcessor,
   createJobDiscoveryProcessor,
   createLimitGuardedProcessor,
   createMatchingProcessor,
@@ -44,9 +46,12 @@ const queues = new Map<QueueName, Queue>(
 // Discovery persists listings and source health into Postgres. Injected as
 // `discover` so processor deps stay decoupled from the jobs package. Matching
 // is deterministic scoring against the candidate profile; injected as
-// `matchAll` for the scheduled aiMatching processor.
+// `matchAll` for the scheduled aiMatching processor. Application preparation
+// creates Prepared applications from eligible matches; injected as
+// `prepareApplications` for the scheduled applicationPreparation processor.
 const jobService = new JobService();
 const matchingService = new MatchingService();
+const applicationService = new ApplicationService();
 const deps: ProcessorDeps = {
   config,
   logger,
@@ -59,6 +64,7 @@ const deps: ProcessorDeps = {
       ...(keywords && keywords.length > 0 ? { keywords } : {}),
     }),
   matchAll: (filter) => matchingService.matchAll(filter),
+  prepareApplications: (options) => applicationService.prepareMatchesForCandidate(options),
 };
 
 // Dedicated publish client for the realtime activity feed. Subscribers
@@ -100,10 +106,7 @@ const publishActivity = async (event: WorkerActivityEvent): Promise<void> => {
 const registrations = [
   registerProcessor('notifications', createNotificationsProcessor(deps)),
   registerProcessor('jobDiscovery', createJobDiscoveryProcessor(deps)),
-  registerProcessor(
-    'applicationPreparation',
-    createLimitGuardedProcessor('applicationPreparation', deps),
-  ),
+  registerProcessor('applicationPreparation', createApplicationPreparationProcessor(deps)),
   registerProcessor('browserAutomation', createLimitGuardedProcessor('application', deps)),
   registerProcessor('aiMatching', createMatchingProcessor(deps)),
 ];

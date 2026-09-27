@@ -9,6 +9,7 @@
     "build": "tsc -p tsconfig.build.json --noEmit"
   },
   "dependencies": {
+    "@jobs-app/applications": "*",
     "@jobs-app/config": "*",
     "@jobs-app/database": "*",
     "@jobs-app/jobs": "*",
