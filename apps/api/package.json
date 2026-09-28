@@ -14,7 +14,7 @@
     "@jobs-app/config": "*",
     "@jobs-app/database": "*",
     "@jobs-app/shared": "*",
-    "@prisma/client": "^6.7.0",
+    "@prisma/client": "^7.10.0",
     "fastify": "^5.2.1",
     "ioredis": "^6.0.0"
   }
